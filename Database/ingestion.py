@@ -8,41 +8,43 @@ from configparser import ConfigParser
 import pandas as pd
 import os
 from confluent_kafka import Consumer, KafkaError, TopicPartition, KafkaException, Producer
+import time
+import datetime
 
-load_dotenv(override=True,verbose=True)
+load_dotenv(override=True, verbose=True)
 
-bootstrap_servers=os.getenv('BOOTSTRAP_SERVERS')
-security_protocol='SASL_SSL'
-sasl_username=os.getenv('SASL_USERNAME')
-sasl_password=os.getenv('SASL_PASSWORD')
+bootstrap_servers = os.getenv('BOOTSTRAP_SERVERS')
+security_protocol = 'SASL_SSL'
+sasl_username = os.getenv('SASL_USERNAME')
+sasl_password = os.getenv('SASL_PASSWORD')
 
 c = Consumer({
-        'bootstrap.servers': bootstrap_servers,
-        'group.id': f'deloton_stream' +str(uuid.uuid1()),
-        'security.protocol': 'SASL_SSL',
-        'sasl.mechanisms': 'PLAIN',
-        'sasl.username': sasl_username,
-        'sasl.password': sasl_password,
-        'fetch.wait.max.ms': 6000,
-        'auto.offset.reset': 'latest',
-        'enable.auto.commit': 'false',
-        'max.poll.interval.ms': '86400000',
-        'topic.metadata.refresh.interval.ms': "-1",
-        "client.id": 'id-002-005',
-    })
-values=[]
-cont=True
-topic='deloton'
+    'bootstrap.servers': bootstrap_servers,
+    'group.id': f'deloton_stream' + str(uuid.uuid1()),
+    'security.protocol': 'SASL_SSL',
+    'sasl.mechanisms': 'PLAIN',
+    'sasl.username': sasl_username,
+    'sasl.password': sasl_password,
+    'fetch.wait.max.ms': 6000,
+    'auto.offset.reset': 'latest',
+    'enable.auto.commit': 'false',
+    'max.poll.interval.ms': '86400000',
+    'topic.metadata.refresh.interval.ms': "-1",
+    "client.id": 'id-002-005',
+})
+values = []
+cont = True
+topic = 'deloton'
 
 c.subscribe([topic])
-while cont==True:
+while cont == True:
     try:
-        message=c.poll(1.0)
+        message = c.poll(1.0)
         if message is None:
             print('None')
         else:
             print(message.value().decode())
-        
+
     except KeyboardInterrupt:
         c.close()
 
@@ -55,3 +57,10 @@ def split_name(name: str) -> list:
     else:
         return [None, None]
 
+
+def unix_to_date(timestamp: int) -> datetime.date:
+    """Take in unix timestamp (in ms, so have to divide by 1,000 to get seconds) and return date"""
+    timestamp /= 1000
+    time_and_date = datetime.datetime.fromtimestamp(
+        timestamp)
+    return time_and_date.date()
