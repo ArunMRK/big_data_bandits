@@ -90,7 +90,6 @@ def extract_user_details(message: str) -> dict:
                  "email": raw_data["email_address"], "date_created": date_created,
                  "original_source": raw_data["original_source"],
                  "bike_serial": raw_data["bike_serial"]}
-
     return user_dict
 
 
@@ -104,7 +103,12 @@ def extract_date(message: str) -> datetime.time:
 
 
 def upload_user_details_to_db(details):
-    return
+    sql = f"""INSERT INTO user_details (user_id, first, second, address, postcode, 
+    dob_date, height, weight, gender, email, date_created, original_source, bike_serial)
+    VALUES  ('{details['user_id']}', '{details['first']}', '{details['second']}', 
+    '{details['address']}', '{details['postcode']}', '{details['dob_date']}', '{details['height']}','{details['weight']}', '{details['gender']}', '{details['email']}', 
+    '{details['date_created']}', '{details['original_source']}', '{details['bike_serial']}');"""
+    query_executer(sql)
 
 
 def get_id_from_database_for_made_user():
@@ -134,11 +138,21 @@ def find_next_new_ride_id():
 
 
 def upload_ride_data_for_id(ride_id, ride_duration_resistance, ride_hrt_rpm_power):
-    return
+    sql = f"""INSERT INTO ride_details (ride_id, duration, date_time, resistance, heart_rate,
+    rpm, power) VALUES ('{ride_id}', '{ride_duration_resistance['duration']}', 
+    '{ride_duration_resistance['date_time']}', 
+    '{ride_duration_resistance['resistance']}', '{ride_hrt_rpm_power['heart_rate']}',
+    '{ride_hrt_rpm_power['rpm']}', '{ride_hrt_rpm_power['power']}'"""
+    query_executer(sql)
 
 
 def combine_tables(ride_id, user_id, date):
-    return
+    sql = f"""INSERT INTO user_ride (ride_id, user_id, date) VALUES
+        ('{ride_id}', '{user_id}', '{date}')"""
+    query_executer(sql)
+
+test_data_ride_duration = '{"log": "2022-07-25 16:13:31.709082 mendoza v9: [INFO]: Ride - duration = 454.0; resistance = 60\n"}'
+test_data_hrt = '{"log": "2022-07-25 16:13:32.209086 mendoza v9: [INFO]: Telemetry - hrt = 0; rpm = 30; power = 11.22896664\n"}'
 
 
 bootstrap_servers = os.getenv('BOOTSTRAP_SERVERS')
