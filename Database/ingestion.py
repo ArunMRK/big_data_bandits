@@ -8,13 +8,16 @@ from configparser import ConfigParser
 import pandas as pd
 import os
 from confluent_kafka import Consumer, KafkaError, TopicPartition, KafkaException, Producer
+import time
+import datetime
 
 load_dotenv(override=True, verbose=True)
+load_dotenv(override=True, verbose=True)
 
-bootstrap_servers = os.getenv('BOOTSTRAP_SERVERS')
-security_protocol = 'SASL_SSL'
-sasl_username = os.getenv('SASL_USERNAME')
-sasl_password = os.getenv('SASL_PASSWORD')
+bootstrap_servers  =  os.getenv('BOOTSTRAP_SERVERS')
+security_protocol  =  'SASL_SSL'
+sasl_username  =  os.getenv('SASL_USERNAME')
+sasl_password  =  os.getenv('SASL_PASSWORD')
 
 c = Consumer({
     'bootstrap.servers': bootstrap_servers,
@@ -33,6 +36,7 @@ c = Consumer({
 values = []
 cont = True
 topic = 'deloton'
+    
 
 c.subscribe([topic])
 
@@ -42,9 +46,9 @@ user_id = None
 ride_id = None
 
 
-while cont == True:
+while cont  ==  True:
     try:
-        message = c.poll(1.0)
+        message  =  c.poll(1.0)
         if message is None:
             print('None')
         else:
@@ -90,3 +94,11 @@ def split_name(name: str) -> list:
         return name.split(" ")
     else:
         return [None, None]
+
+
+def unix_to_date(timestamp: int) -> datetime.date:
+    """Take in unix timestamp (in ms, so have to divide by 1,000 to get seconds) and return date"""
+    timestamp /= 1000
+    time_and_date = datetime.datetime.fromtimestamp(
+        timestamp)
+    return time_and_date.date()
