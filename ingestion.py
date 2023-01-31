@@ -15,7 +15,7 @@ bootstrap_servers=os.getenv('BOOTSTRAP_SERVERS')
 security_protocol='SASL_SSL'
 sasl_username=os.getenv('SASL_USERNAME')
 sasl_password=os.getenv('SASL_PASSWORD')
-
+# comment
 
 c = Consumer({
         'bootstrap.servers': bootstrap_servers,
