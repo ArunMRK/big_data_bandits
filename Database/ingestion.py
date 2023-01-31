@@ -1,3 +1,4 @@
+import ast
 import base64
 import datetime
 import json
@@ -22,7 +23,7 @@ rds_password = os.getenv('RDS_PASSWORD')
 rds_host = os.getenv('RDS_HOST')
 
 
-def get_db_connection() :
+def get_db_connection():
     """ Create a connection for database postgres Aurora"""
     try:
         conn = psycopg2.connect(f"""
@@ -34,12 +35,23 @@ def get_db_connection() :
     except:
         print("Error connecting to database.")
 
-
-print('TRYING DB CONNECTION\n')
 conn = get_db_connection()
-print('TRYING DB CONNECTION\n')
 
-import ast
+def query_executer(query, params=()):
+    if conn != None:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            try:
+                cur.execute(query, params)
+                conn.commit()
+                try:
+                    returned_data = cur.fetchall()
+                    return returned_data
+                except:
+                    print('No results to fetch')
+            except:
+                return "Error executing query."
+    else:
+        return "No connection"
 
 
 def split_name(name: str) -> list:
@@ -72,14 +84,13 @@ def extract_user_details(message: str) -> dict:
     postcode = full_address[-1]
     address = ", ".join(full_address[:-1])
 
-
     user_dict = {"user_id": raw_data["user_id"], "first": name[0],
-        "second": name[1], "address": address, "postcode": postcode, 
-        "dob_date": dob_date, "height": raw_data["height_cm"],
-        "weight": raw_data["weight_kg"], "gender": raw_data["gender"], 
-        "email": raw_data["email_address"], "date_created": date_created,
-        "original_source": raw_data["original_source"],
-        "bike_serial": raw_data["bike_serial"]}
+                 "second": name[1], "address": address, "postcode": postcode,
+                 "dob_date": dob_date, "height": raw_data["height_cm"],
+                 "weight": raw_data["weight_kg"], "gender": raw_data["gender"],
+                 "email": raw_data["email_address"], "date_created": date_created,
+                 "original_source": raw_data["original_source"],
+                 "bike_serial": raw_data["bike_serial"]}
 
     return user_dict
 
@@ -132,7 +143,7 @@ c = Consumer({
     "client.id": 'id-002-005',
 })
 values = []
-cont = True
+cont = False
 topic = 'deloton'
 
 c.subscribe([topic])
@@ -143,6 +154,7 @@ user_id = None
 ride_id = None
 ready_to_process = False
 
+print(f'Kafka set to run set to: {cont}, adjust `cont` to change')
 while cont == True:
     try:
         message = c.poll(1.0)
