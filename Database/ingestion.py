@@ -6,10 +6,10 @@ import uuid
 from dotenv import load_dotenv
 from configparser import ConfigParser
 import pandas as pd
-from confluent_kafka import Consumer, KafkaError, TopicPartition, KafkaException, Producer
-#Comment
-load_dotenv(override=True,verbose=True)
 import os
+from confluent_kafka import Consumer, KafkaError, TopicPartition, KafkaException, Producer
+
+load_dotenv(override=True,verbose=True)
 
 bootstrap_servers=os.getenv('BOOTSTRAP_SERVERS')
 security_protocol='SASL_SSL'
@@ -45,3 +45,13 @@ while cont==True:
         
     except KeyboardInterrupt:
         c.close()
+
+
+def split_name(name: str) -> list:
+    """Split fullname into a first and second name. Returns a list where the first element is the first name and the second element is the last name
+    """
+    if name:
+        return name.split(" ")
+    else:
+        return [None, None]
+
