@@ -11,6 +11,31 @@ from confluent_kafka import Consumer, KafkaError, TopicPartition, KafkaException
 import time
 import datetime
 
+def extract_user_details(message):
+    return
+
+def upload_user_details_to_db(details):
+    return
+
+def get_id_from_database_for_made_user():
+    return
+
+def extract_duration_resistance_data(data):
+    return
+
+def extract_ride_hrt_rpm_power(data):
+    return
+
+def find_next_new_ride_id():
+    return
+
+def upload_ride_data_for_id(ride_id, ride_duration_resistance, ride_hrt_rpm_power):
+    return
+
+def combine_tables(ride_id, user_id, date):
+    return
+
+
 load_dotenv(override=True, verbose=True)
 load_dotenv(override=True, verbose=True)
 
@@ -37,14 +62,13 @@ values = []
 cont = True
 topic = 'deloton'
     
-
 c.subscribe([topic])
 
 # globals for kafka logic
 found_user = False
 user_id = None
 ride_id = None
-
+ready_to_process = False
 
 while cont  ==  True:
     try:
@@ -54,34 +78,52 @@ while cont  ==  True:
         else:
             print(message.value().decode())
 
-            # msg = message.value().decode()
+
+            msg = message.value().decode()
             
+
+
+
+            if 'beginning' in msg['log']:
+                print('pass over message for new USER incoming')
+
             # (NEW USER ENTRY)
-            # if 'User' IN msg :
+            elif 'user_id' in msg['log']:
                 
-                # found_user == True
+                found_user = True
                 # ** code for uploading user details to database **
-                # user_details = e
-                # user_id = get_id_from_database_for_made_user()
-                # ride_id = None
+                user_details = extract_user_details(msg)
+                upload_user_details_to_db(user_details)
+                user_id = get_id_from_database_for_made_user()
+                ride_id = None
             
             # (NEW DATA BUT NO CURRENTLY FOUND USER)
-            # elif 'User' NOT IN msg AND found_user == False:
+            elif 'user_id' not in msg['log'] and found_user == False:
 
                 # *skip because caught mid-stream without user*
+                print('currently entered mid-stream, waiting for new user')
 
             # (USER IS FOUND, MSG is DATA)
-            # elif found_user == True AND 'User' NOT IN msg :
+            elif (found_user == True) and ('user_id' not in msg['log']) :
+                
+                # get first parts of data
+                if 'Ride - duration' in msg['log']:
+                    ride_duration_resistance = extract_duration_resistance_data(msg)
 
-                # (CHECK FOR CURRENT RIDE)
-                # if ride_id = None:
-                    # ride_id = find_next_new_ride_id()
-                    # upload_ride_data_for_id(ride_id)
+                elif 'Telemetry - hrt' in msg['log']:
+                    ride_hrt_rpm_power = extract_ride_hrt_rpm_power(msg['log'])
+                    ready_to_process = True
+
+
+                # (CHECK FOR NEW RIDE ESTABLISHED BY NEW USER INPUT)
+                if ride_id == None and ready_to_process == True:
+                    ride_id = find_next_new_ride_id()
+                    upload_ride_data_for_id(ride_id, ride_duration_resistance, ride_hrt_rpm_power)
+                    combine_tables(ride_id, user_id, date)
 
                 # (DATA FOR AN ALREADY ESTABLISHED RIDE)
-                # if ride_id IS NOT None:
-                    # upload_ride_data_for_id(ride_id)
-
+                elif (ride_id is not None) and (ready_to_process == True):
+                    upload_ride_data_for_id(ride_id, ride_duration_resistance, ride_hrt_rpm_power)
 
     except KeyboardInterrupt:
         c.close()
@@ -102,3 +144,4 @@ def unix_to_date(timestamp: int) -> datetime.date:
     time_and_date = datetime.datetime.fromtimestamp(
         timestamp)
     return time_and_date.date()
+
