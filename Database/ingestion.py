@@ -16,7 +16,6 @@ security_protocol='SASL_SSL'
 sasl_username=os.getenv('SASL_USERNAME')
 sasl_password=os.getenv('SASL_PASSWORD')
 
-
 c = Consumer({
         'bootstrap.servers': bootstrap_servers,
         'group.id': f'deloton_stream' +str(uuid.uuid1()),
