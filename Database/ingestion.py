@@ -9,10 +9,9 @@ from configparser import ConfigParser
 import pandas as pd
 import os
 from confluent_kafka import Consumer, KafkaError, TopicPartition, KafkaException, Producer
-import time
-import datetime
 import psycopg2
 import psycopg2.extras
+import re
 
 load_dotenv(override=True, verbose=True)
 
@@ -93,6 +92,15 @@ def extract_user_details(message: str) -> dict:
                  "bike_serial": raw_data["bike_serial"]}
 
     return user_dict
+
+
+def extract_date(message: str) -> datetime.time:
+    """Extracts the date from the kafka data"""
+    regex = "[0-9]{4}(-[0-9]{2}){2}"
+    result = re.search(regex, message).group(0)
+    date = datetime.datetime.strptime(result, '%Y-%m-%d').date()
+
+    return date
 
 
 def upload_user_details_to_db(details):
