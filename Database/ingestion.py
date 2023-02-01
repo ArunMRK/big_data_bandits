@@ -14,10 +14,6 @@ from sqlwrapper import *
 from utils import *
 
 
-load_dotenv(override=True, verbose=True)
-
-conn = get_db_connection()
-
 def upload_user_details_to_db(details: dict) -> NoReturn:
     """Uploads given details into the user_details table"""
     sql = f"""INSERT INTO user_details (user_id, first, second, address, postcode, 
@@ -49,13 +45,6 @@ def upload_ride_data_for_user_id(
     query_executer(conn, sql)
 
 
-def combine_tables(user_id: int, date: datetime.time) -> NoReturn:
-    """Function that executes code for adding data to the joining middle table user_ride"""
-    sql = f"""INSERT INTO user_ride (user_id, date) VALUES
-        ('{user_id}', '{date}')"""
-    query_executer(conn, sql)
-
-
 def check_user_exists(user_id: int) -> bool:
     """Checks whether a user already exists in user_details"""
     sql = f"""SELECT * FROM user_details
@@ -68,97 +57,100 @@ def check_user_exists(user_id: int) -> bool:
     return False
 
 
-bootstrap_servers = os.getenv('BOOTSTRAP_SERVERS')
-security_protocol = 'SASL_SSL'
-sasl_username = os.getenv('SASL_USERNAME')
-sasl_password = os.getenv('SASL_PASSWORD')
+if __name__ == "__main__":
+    load_dotenv(override=True, verbose=True)
+    bootstrap_servers = os.getenv('BOOTSTRAP_SERVERS')
+    security_protocol = 'SASL_SSL'
+    sasl_username = os.getenv('SASL_USERNAME')
+    sasl_password = os.getenv('SASL_PASSWORD')
 
-c = Consumer({
-    'bootstrap.servers': bootstrap_servers,
-    'group.id': f'deloton_stream' + str(uuid.uuid1()),
-    'security.protocol': 'SASL_SSL',
-    'sasl.mechanisms': 'PLAIN',
-    'sasl.username': sasl_username,
-    'sasl.password': sasl_password,
-    'fetch.wait.max.ms': 6000,
-    'auto.offset.reset': 'latest',
-    'enable.auto.commit': 'false',
-    'max.poll.interval.ms': '86400000',
-    'topic.metadata.refresh.interval.ms': "-1",
-    "client.id": 'id-002-005',
-})
+    conn = get_db_connection()
+    
+    c = Consumer({
+        'bootstrap.servers': bootstrap_servers,
+        'group.id': f'deloton_stream' + str(uuid.uuid1()),
+        'security.protocol': 'SASL_SSL',
+        'sasl.mechanisms': 'PLAIN',
+        'sasl.username': sasl_username,
+        'sasl.password': sasl_password,
+        'fetch.wait.max.ms': 6000,
+        'auto.offset.reset': 'latest',
+        'enable.auto.commit': 'false',
+        'max.poll.interval.ms': '86400000',
+        'topic.metadata.refresh.interval.ms': "-1",
+        "client.id": 'id-002-005',
+    })
 
-cont = True
-topic = 'deloton'
+    cont = True
+    topic = 'deloton'
 
-c.subscribe([topic])
+    c.subscribe([topic])
 
-# globals for kafka logic
-found_user = False
-user_id = None
-ride_id = None
-ready_to_process = False
-current_ride_data = []
-user_details = None
+    # globals for kafka logic
+    found_user = False
+    user_id = None
+    current_ride_data = {
+        "datetime": [], "duration": [], "resistance": [], "heart_rate": [],
+        "rpm": [], "power": []
+        }
+    ride_exists = False
+    user_details = None
 
-print(f'Kafka set to run set to: {cont}, adjust `cont` to change')
-while cont:
-    try:
-        message = c.poll(1.0)
-        if not message:
-            print('None')
-        else:
-            print(current_ride_data)
-            msg = message.value().decode()
+    print(f'Kafka set to run set to: {cont}, adjust `cont` to change')
+    while cont:
+        try:
+            message = c.poll(1.0)
+            if not message:
+                print('None')
+            else:
+                print(current_ride_data)
+                msg = message.value().decode()
 
-            if 'beginning' in msg:
-                if current_ride_data:
-                    # TODO: if current ride data exists, we need to aggregate it and push it to the warehouse
-                    if not check_user_exists(user_id):
-                        upload_user_details_to_db(user_details)
-                        date = extract_date(msg)
+                if 'beginning' in msg:
+                    if ride_exists:
+                        # TODO: if current ride data exists, we need to aggregate it and push it to the warehouse
+                        if not check_user_exists(user_id):
+                            upload_user_details_to_db(user_details)
+                            date = extract_date(msg)
 
-                found_user = False
-                user_id = None
-                ride_id = None
-                user_details = None
-                current_ride_data = []
-                print('pass over message for new USER incoming')
-
-            # (NEW USER ENTRY)
-            elif 'user_id' in msg:
-                print("new user found")
-                # ** code for uploading user details to database **
-                found_user = True
-                user_details = extract_user_details(msg)
-                print(user_details)
-                user_id = user_details["user_id"]
-
-            # (NEW DATA BUT NO CURRENTLY FOUND USER)
-            elif 'user_id' not in msg and not found_user:
-                # *skip because caught mid-stream without user*
-                print('currently entered mid-stream, waiting for new user')
-
-            # (USER IS FOUND, MSG is DATA)
-            elif found_user and ('user_id' not in msg):
-                # get first parts of data
-                if 'Ride - duration' in msg:
-                    ride_duration_resistance = extract_ride_duration_resistance_data(
-                        msg)
-
-                elif 'Telemetry - hrt' in msg:
-                    ride_hrt_rpm_power = extract_ride_hrt_rpm_power(msg)
-                    ready_to_process = True
-
-                # (CHECK FOR NEW RIDE ESTABLISHED BY NEW USER INPUT)
-                if ready_to_process:
-                    print("adding element to list")
-                    details_dict = {
-                        **ride_duration_resistance, **ride_hrt_rpm_power
+                    found_user = False
+                    ride_exists = False
+                    current_ride_data = {
+                        "datetime": [], "duration": [], "resistance": [], 
+                        "heart_rate": [], "rpm": [], "power": []
                         }
-                    current_ride_data.append(details_dict)
-                    print(current_ride_data)
-                    ready_to_process = False
+                    print('pass over message for new USER incoming')
 
-    except KeyboardInterrupt:
-        c.close()
+                # (NEW USER ENTRY)
+                elif 'user_id' in msg:
+                    print("new user found")
+                    # ** code for uploading user details to database **
+                    found_user = True
+                    user_details = extract_user_details(msg)
+                    print(user_details)
+                    user_id = user_details["user_id"]
+                    ride_exists = True
+
+                # (NEW DATA BUT NO CURRENTLY FOUND USER)
+                elif 'user_id' not in msg and not found_user:
+                    # *skip because caught mid-stream without user*
+                    print('currently entered mid-stream, waiting for new user')
+
+                # (USER IS FOUND, MSG is DATA)
+                elif found_user and ('user_id' not in msg):
+                    # get first parts of data
+                    if 'Ride - duration' in msg:
+                        ride_duration_resistance = extract_ride_duration_resistance_data(
+                            msg)
+                        current_ride_data["duration"].append(ride_duration_resistance["duration"])
+                        current_ride_data["resistance"].append(ride_duration_resistance["resistance"])
+                        current_ride_data["datetime"].append(ride_duration_resistance["date_time"])
+
+                    elif 'Telemetry - hrt' in msg:
+                        ride_hrt_rpm_power = extract_ride_hrt_rpm_power(msg)
+                        current_ride_data["heart_rate"].append(ride_hrt_rpm_power["heart_rate"])
+                        current_ride_data["rpm"].append(ride_hrt_rpm_power["rpm"])
+                        current_ride_data["power"].append(ride_hrt_rpm_power["power"])
+    
+        except KeyboardInterrupt:
+            c.close()

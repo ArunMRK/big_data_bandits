@@ -28,15 +28,15 @@ def query_executer(conn: psycopg2.extensions.connection ,query: str, params: tup
     """An executor function for executing sql statements"""
     if conn != None:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-            # try:
-            cur.execute(query, params)
-            conn.commit()
             try:
-                returned_data = cur.fetchall()
-                return returned_data
+                cur.execute(query, params)
+                conn.commit()
+                try:
+                    returned_data = cur.fetchall()
+                    return returned_data
+                except:
+                    print('No results to fetch')
             except:
-                print('No results to fetch')
-            # except:
-            #     return "Error executing query."
+                return "Error executing query."
     else:
         return "No connection"
