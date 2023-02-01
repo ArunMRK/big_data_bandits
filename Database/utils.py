@@ -100,7 +100,7 @@ def list_average(ls: list) -> float:
 
 
 def current_ride_averages(current_ride_data: list) -> dict:
-    # Takes in readings over a ride and returns average values for rpm, heart rate, power and resistance over the course of the ride
+    """Takes in readings over a ride and returns average values for rpm, heart rate, power and resistance over the course of the ride"""
     heart_readings = []
     power_readings = []
     rpm_readings = []
@@ -124,7 +124,7 @@ def current_ride_averages(current_ride_data: list) -> dict:
 
 
 def current_ride_maximums(current_ride_data: list) -> dict:
-    # Takes in readings over a ride, and returns max values for rpm, heart rate, power and resistance over the course of the ride
+    """Takes in readings over a ride, and returns max values for rpm, heart rate, power and resistance over the course of the ride"""
     heart_readings = []
     power_readings = []
     rpm_readings = []
@@ -148,7 +148,7 @@ def current_ride_maximums(current_ride_data: list) -> dict:
 
 
 def current_ride_timings(current_ride_data: list) -> dict:
-    # Takes in readings over a ride and returns duration, and start and end timestamps
+    """Takes in readings over a ride and returns duration, and start and end timestamps"""
     duration_readings = []
     datetime_readings = []
     for row in current_ride_data:
