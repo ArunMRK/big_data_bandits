@@ -39,18 +39,18 @@ def get_db_connection() -> psycopg2.extensions.connection:
 conn = get_db_connection()
 
 
-def query_executer(query: str, params: tuple=()) -> list:
+def query_executer(query: str, params: tuple = ()) -> list:
     """An executor function for executing sql statements"""
     if conn != None:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
             # try:
-                cur.execute(query, params)
-                conn.commit()
-                try:
-                    returned_data = cur.fetchall()
-                    return returned_data
-                except:
-                    print('No results to fetch')
+            cur.execute(query, params)
+            conn.commit()
+            try:
+                returned_data = cur.fetchall()
+                return returned_data
+            except:
+                print('No results to fetch')
             # except:
             #     return "Error executing query."
     else:
@@ -60,8 +60,14 @@ def query_executer(query: str, params: tuple=()) -> list:
 def split_name(name: str) -> list:
     """Split fullname into a first and second name. Returns a list where the first element is the first name and the second element is the last name
     """
+    exceptions = ["Mr", "Mrs", "Miss", "Dr", "Mx", "Prof", "Ms",
+                  "Mr.", "Mrs.", "Miss.", "Dr.", "Mx.", "Prof.", "Ms."]
+
     if name:
-        return name.split(" ")
+        split_name = name.split(" ")
+        if split_name[0] in exceptions:
+            return [split_name[1], split_name[-1]]
+        return [split_name[0], split_name[-1]]
     else:
         return [None, None]
 
@@ -106,6 +112,7 @@ def extract_date(message: str) -> datetime.time:
     print(date)
     return date
 
+
 def extract_date_time(message: str) -> datetime.time:
     """Extracts the date from the kafka data"""
     regex = "[0-9]{4}(-[0-9]{2}){2} [0-9]{2}:[0-9]{2}:[0-9]{2}"
@@ -116,17 +123,13 @@ def extract_date_time(message: str) -> datetime.time:
 
 
 def upload_user_details_to_db(details: dict) -> NoReturn:
-    """Uploads given details into the user_details table""" 
+    """Uploads given details into the user_details table"""
     sql = f"""INSERT INTO user_details (user_id, first, second, address, postcode, 
     dob_date, height, weight, gender, email, date_created, original_source, bike_serial)
     VALUES  ('{details['user_id']}', '{details['first']}', '{details['second']}', 
     '{details['address']}', '{details['postcode']}', '{details['dob_date']}', '{details['height']}','{details['weight']}', '{details['gender']}', '{details['email']}', 
     '{details['date_created']}', '{details['original_source']}', '{details['bike_serial']}');"""
     query_executer(sql)
-
-
-def get_id_from_database_for_made_user():
-    return
 
 
 def extract_ride_duration_resistance_data(message: str):
@@ -136,21 +139,23 @@ def extract_ride_duration_resistance_data(message: str):
     data = ast.literal_eval(test)["log"].split("[INFO]: ")[-1]
     data_array = data.strip().split(";")
     date_time = extract_date_time(message)
-    message_dict = {words[val.split("= ")[0].strip()]: val.split("= ")[-1] for val in data_array}
-    ride_dict = {'duration':message_dict['duration'],
-    'resistance':message_dict['resistance'], 'date_time':date_time}
+    message_dict = {words[val.split("= ")[0].strip()]: val.split(
+        "= ")[-1] for val in data_array}
+    ride_dict = {'duration': message_dict['duration'],
+                 'resistance': message_dict['resistance'], 'date_time': date_time}
 
     return ride_dict
 
 
-def extract_ride_hrt_rpm_power(message:str):
+def extract_ride_hrt_rpm_power(message: str):
     words = {"Telemetry - hrt": "heart_rate", "rpm": "rpm", "power": "power"}
     data = ast.literal_eval(message)["log"].split("[INFO]: ")[-1]
     message_arr = data.strip().split(";")
-    message_dict = {words[val.split("= ")[0].strip()]: val.split("= ")[-1] for val in message_arr}  
+    message_dict = {words[val.split("= ")[0].strip()]: val.split(
+        "= ")[-1] for val in message_arr}
 
-    ride_dict = {'heart_rate':message_dict['heart_rate'],
-    'rpm':message_dict['rpm'],'power':message_dict['power']}
+    ride_dict = {'heart_rate': message_dict['heart_rate'],
+                 'rpm': message_dict['rpm'], 'power': message_dict['power']}
 
     return ride_dict
 
@@ -169,7 +174,7 @@ def find_next_new_ride_id() -> int:
 
 def upload_ride_data_for_id(
     ride_id: int, ride_duration_resistance: dict, ride_hrt_rpm_power: dict
-    ) -> NoReturn:
+) -> NoReturn:
     sql = f"""INSERT INTO ride_details (ride_id, duration, date_time, resistance, heart_rate,
     rpm, power) 
     VALUES 
@@ -180,11 +185,12 @@ def upload_ride_data_for_id(
     query_executer(sql)
 
 
-def combine_tables(ride_id: int, user_id: int, date: datetime.time) -> NoReturn:
+def combine_tables(user_id: int, date: datetime.time) -> NoReturn:
     """Function that executes code for adding data to the joining middle table user_ride"""
-    sql = f"""INSERT INTO user_ride (ride_id, user_id, date) VALUES
-        ('{ride_id}', '{user_id}', '{date}')"""
+    sql = f"""INSERT INTO user_ride (user_id, date) VALUES
+        ('{user_id}', '{date}')"""
     query_executer(sql)
+
 
 bootstrap_servers = os.getenv('BOOTSTRAP_SERVERS')
 security_protocol = 'SASL_SSL'
@@ -205,8 +211,9 @@ c = Consumer({
     'topic.metadata.refresh.interval.ms': "-1",
     "client.id": 'id-002-005',
 })
+
 values = []
-cont = False
+cont = True
 topic = 'deloton'
 
 c.subscribe([topic])
@@ -218,58 +225,56 @@ ride_id = None
 ready_to_process = False
 
 print(f'Kafka set to run set to: {cont}, adjust `cont` to change')
-while cont == True:
+while cont:
     try:
         message = c.poll(1.0)
-        if message is None:
+        if not message:
             print('None')
         else:
-            print(message.value().decode())
-
             msg = message.value().decode()
+            print(msg)
 
-            if 'beginning' in msg['log']:
+            if 'beginning' in msg:
+                found_user = False
+                user_id = None
+                ride_id = None
+                ready_to_process = False
                 print('pass over message for new USER incoming')
 
             # (NEW USER ENTRY)
-            elif 'user_id' in msg['log']:
-
+            elif 'user_id' in msg:
+                print("new user found")
                 # ** code for uploading user details to database **
                 found_user = True
                 user_details = extract_user_details(msg)
+                user_id = user_details["user_id"]
                 upload_user_details_to_db(user_details)
-                user_id = get_id_from_database_for_made_user()
-                ride_id = None
+                date = extract_date(msg)
+                combine_tables(user_id, date)
+                ride_id = find_next_new_ride_id()
 
             # (NEW DATA BUT NO CURRENTLY FOUND USER)
-            elif 'user_id' not in msg['log'] and found_user == False:
-
+            elif 'user_id' not in msg and not found_user:
                 # *skip because caught mid-stream without user*
                 print('currently entered mid-stream, waiting for new user')
 
             # (USER IS FOUND, MSG is DATA)
-            elif (found_user == True) and ('user_id' not in msg['log']):
-
+            elif found_user and ('user_id' not in msg):
                 # get first parts of data
-                if 'Ride - duration' in msg['log']:
+                if 'Ride - duration' in msg:
                     ride_duration_resistance = extract_ride_duration_resistance_data(
                         msg)
 
-                elif 'Telemetry - hrt' in msg['log']:
-                    ride_hrt_rpm_power = extract_ride_hrt_rpm_power(msg['log'])
+                elif 'Telemetry - hrt' in msg:
+                    ride_hrt_rpm_power = extract_ride_hrt_rpm_power(msg)
                     ready_to_process = True
 
                 # (CHECK FOR NEW RIDE ESTABLISHED BY NEW USER INPUT)
-                if ride_id == None and ready_to_process == True:
-                    ride_id = find_next_new_ride_id()
+                if ready_to_process:
+                    print("adding row to database")
                     upload_ride_data_for_id(
                         ride_id, ride_duration_resistance, ride_hrt_rpm_power)
-                    combine_tables(ride_id, user_id, date)
-
-                # (DATA FOR AN ALREADY ESTABLISHED RIDE)
-                elif (ride_id is not None) and (ready_to_process == True):
-                    upload_ride_data_for_id(
-                        ride_id, ride_duration_resistance, ride_hrt_rpm_power)
+                    ready_to_process = False
 
     except KeyboardInterrupt:
         c.close()
