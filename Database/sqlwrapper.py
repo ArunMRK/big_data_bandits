@@ -11,6 +11,7 @@ rds_user = os.getenv('RDS_USER')
 rds_password = os.getenv('RDS_PASSWORD')
 rds_host = os.getenv('RDS_HOST')
 
+
 def get_db_connection() -> psycopg2.extensions.connection:
     """ Create a connection for database postgres Aurora"""
     try:
@@ -28,15 +29,12 @@ def query_executer(conn: psycopg2.extensions.connection ,query: str, params: tup
     """An executor function for executing sql statements"""
     if conn != None:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(query, params)
+            conn.commit()
             try:
-                cur.execute(query, params)
-                conn.commit()
-                try:
-                    returned_data = cur.fetchall()
-                    return returned_data
-                except:
-                    print('No results to fetch')
+                returned_data = cur.fetchall()
+                return returned_data
             except:
-                return "Error executing query."
+                print("No results to fetch")
     else:
         return "No connection"

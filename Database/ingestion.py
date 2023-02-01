@@ -21,27 +21,15 @@ def upload_user_details_to_db(details: dict) -> NoReturn:
     VALUES  ('{details['user_id']}', '{details['first']}', '{details['second']}', 
     '{details['address']}', '{details['postcode']}', '{details['dob_date']}', '{details['height']}','{details['weight']}', '{details['gender']}', '{details['email']}', 
     '{details['date_created']}', '{details['original_source']}', '{details['bike_serial']}');"""
-    query_executer(conn ,sql)
-
-
-def find_next_new_ride_id() -> int:
-    """Returns the ride_id of the current/most recent ride"""
-    sql = f"""SELECT ride_id FROM user_ride
-        ORDER BY ride_id DESC
-        LIMIT 1;"""
-    result = query_executer(conn ,sql)
-
-    for val in result:
-        # need to extract the values from result and turn it into a list
-        return list(val.values())[0]
+    query_executer(conn, sql)
 
 
 def upload_ride_data_for_user_id(
-        user_id: int, data: dict
-    ) -> NoReturn:
+    user_id: int, data: dict
+) -> NoReturn:
     """Uploading the ride data to the data warehouse"""
     sql = f"""INSERT INTO ride_details (user_id, started, finished, duration, avg_rpm, avg_heart_rate, avg_power, avg_resistance, max_rpm, max_heart_rate, max_power, max_resistance) VALUES 
-    ('{user_id}', '{data['started']}', '{data['finished']}', '{data['duration']}', '{data['avg_rpm']}', , '{data['avg_heart_rate']}', '{data['avg_power']}', '{data['avg_resistance']}','{data['max_rpm']}', '{data['max_heart_rate']}', '{data['max_power']}', '{data['max_resistance']}');"""
+    ('{user_id}', '{data['started']}', '{data['finished']}', '{data['duration']}', '{data['avg_rpm']}', '{data['avg_heart_rate']}', '{data['avg_power']}', '{data['avg_resistance']}', '{data['max_rpm']}', '{data['max_heart_rate']}', '{data['max_power']}', '{data['max_resistance']}');"""
     query_executer(conn, sql)
 
 
@@ -58,14 +46,13 @@ def check_user_exists(user_id: int) -> bool:
 
 
 if __name__ == "__main__":
+    conn = get_db_connection()
     load_dotenv(override=True, verbose=True)
     bootstrap_servers = os.getenv('BOOTSTRAP_SERVERS')
     security_protocol = 'SASL_SSL'
     sasl_username = os.getenv('SASL_USERNAME')
     sasl_password = os.getenv('SASL_PASSWORD')
 
-    conn = get_db_connection()
-    
     c = Consumer({
         'bootstrap.servers': bootstrap_servers,
         'group.id': f'deloton_stream' + str(uuid.uuid1()),
@@ -92,7 +79,7 @@ if __name__ == "__main__":
     current_ride_data = {
         "datetime": [], "duration": [], "resistance": [], "heart_rate": [],
         "rpm": [], "power": []
-        }
+    }
     ride_exists = False
     user_details = None
 
@@ -106,36 +93,35 @@ if __name__ == "__main__":
                 print(current_ride_data)
                 msg = message.value().decode()
 
-                if 'beginning' in msg:
-                    if ride_exists:
-                        """Aggregates data for this ride"""
+                if "Getting user" in msg:
+                    if ride_exists and found_user:
+                        if not check_user_exists(user_id):
+                            upload_user_details_to_db(user_details)
+
                         timings = current_ride_timings(current_ride_data)
                         averages = current_ride_averages(current_ride_data)
                         maximums = current_ride_maximums(current_ride_data)
-                        current_ride_details = {**timings, **averages, **maximums}
-                        upload_ride_data_for_user_id(user_id, current_ride_details)
+                        current_ride_details = {
+                            **timings, **averages, **maximums}
 
-                        if not check_user_exists(user_id):
-                            upload_user_details_to_db(user_details)
-                            date = extract_date(msg)
+                        upload_ride_data_for_user_id(
+                            user_id, current_ride_details)
 
                     found_user = False
                     ride_exists = False
                     current_ride_data = {
-                        "datetime": [], "duration": [], "resistance": [], 
+                        "datetime": [], "duration": [], "resistance": [],
                         "heart_rate": [], "rpm": [], "power": []
-                        }
-                    print('pass over message for new USER incoming')
+                    }
 
                 # (NEW USER ENTRY)
                 elif 'user_id' in msg:
                     print("new user found")
                     # ** code for uploading user details to database **
                     found_user = True
-                    user_details = extract_user_details(msg)
-                    print(user_details)
-                    user_id = user_details["user_id"]
                     ride_exists = True
+                    user_details = extract_user_details(msg)
+                    user_id = int(user_details["user_id"])
 
                 # (NEW DATA BUT NO CURRENTLY FOUND USER)
                 elif 'user_id' not in msg and not found_user:
@@ -148,15 +134,21 @@ if __name__ == "__main__":
                     if 'Ride - duration' in msg:
                         ride_duration_resistance = extract_ride_duration_resistance_data(
                             msg)
-                        current_ride_data["duration"].append(ride_duration_resistance["duration"])
-                        current_ride_data["resistance"].append(ride_duration_resistance["resistance"])
-                        current_ride_data["datetime"].append(ride_duration_resistance["date_time"])
+                        current_ride_data["duration"].append(
+                            float(ride_duration_resistance["duration"]))
+                        current_ride_data["resistance"].append(
+                            int(ride_duration_resistance["resistance"]))
+                        current_ride_data["datetime"].append(
+                            ride_duration_resistance["date_time"])
 
                     elif 'Telemetry - hrt' in msg:
                         ride_hrt_rpm_power = extract_ride_hrt_rpm_power(msg)
-                        current_ride_data["heart_rate"].append(ride_hrt_rpm_power["heart_rate"])
-                        current_ride_data["rpm"].append(ride_hrt_rpm_power["rpm"])
-                        current_ride_data["power"].append(ride_hrt_rpm_power["power"])
-    
+                        current_ride_data["heart_rate"].append(
+                            int(ride_hrt_rpm_power["heart_rate"]))
+                        current_ride_data["rpm"].append(
+                            int(ride_hrt_rpm_power["rpm"]))
+                        current_ride_data["power"].append(
+                            float(ride_hrt_rpm_power["power"]))
+
         except KeyboardInterrupt:
             c.close()
