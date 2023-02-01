@@ -4,14 +4,16 @@ import datetime
 import json
 import time
 import uuid
-from dotenv import load_dotenv
-from configparser import ConfigParser
+import boto3
 import pandas as pd
 import os
+from dotenv import load_dotenv
+from configparser import ConfigParser
 from confluent_kafka import Consumer, KafkaError, TopicPartition, KafkaException, Producer
 from typing import NoReturn
 from sqlwrapper import *
 from utils import *
+from s3_connection import *
 
 
 def upload_user_details_to_db(details: dict) -> NoReturn:
@@ -63,6 +65,7 @@ if __name__ == "__main__":
     security_protocol = 'SASL_SSL'
     sasl_username = os.getenv('SASL_USERNAME')
     sasl_password = os.getenv('SASL_PASSWORD')
+    s3 = boto3.client("s3")
 
     conn = get_db_connection()
     
@@ -81,7 +84,7 @@ if __name__ == "__main__":
         "client.id": 'id-002-005',
     })
 
-    cont = True
+    cont = False
     topic = 'deloton'
 
     c.subscribe([topic])
