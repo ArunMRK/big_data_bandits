@@ -108,7 +108,11 @@ if __name__ == "__main__":
 
                 if 'beginning' in msg:
                     if ride_exists:
-                        # TODO: if current ride data exists, we need to aggregate it and push it to the warehouse
+                        # Aggregates data for this ride
+                        timings = current_ride_timings(current_ride_data)
+                        averages = current_ride_averages(current_ride_data)
+                        maximums = current_ride_maximums(current_ride_data)
+                        current_ride_details = {**timings, **averages, **maximums}
                         if not check_user_exists(user_id):
                             upload_user_details_to_db(user_details)
                             date = extract_date(msg)
