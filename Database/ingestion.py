@@ -18,7 +18,6 @@ load_dotenv(override=True, verbose=True)
 
 conn = get_db_connection()
 
-
 def upload_user_details_to_db(details: dict) -> NoReturn:
     """Uploads given details into the user_details table"""
     sql = f"""INSERT INTO user_details (user_id, first, second, address, postcode, 
@@ -41,17 +40,12 @@ def find_next_new_ride_id() -> int:
         return list(val.values())[0]
 
 
-def upload_ride_data_for_id(
-        ride_id: int, ride_duration_resistance: dict, ride_hrt_rpm_power: dict
+def upload_ride_data_for_user_id(
+        user_id: int, data: dict
     ) -> NoReturn:
     """Uploading the ride data to the data warehouse"""
-    sql = f"""INSERT INTO ride_details (ride_id, duration, date_time, resistance, heart_rate,
-    rpm, power) 
-    VALUES 
-    ('{ride_id}', '{ride_duration_resistance['duration']}', 
-    '{ride_duration_resistance['date_time']}', 
-    '{ride_duration_resistance['resistance']}', '{ride_hrt_rpm_power['heart_rate']}',
-    '{ride_hrt_rpm_power['rpm']}', '{ride_hrt_rpm_power['power']}');"""
+    sql = f"""INSERT INTO ride_details (user_id, started, finished, duration, avg_rpm, avg_heart_rate, avg_power, avg_resistance, max_rpm, max_heart_rate, max_power, max_resistance) VALUES 
+    ('{user_id}', '{data['started']}', '{data['finished']}', '{data['duration']}', '{data['avg_rpm']}', , '{data['avg_heart_rate']}', '{data['avg_power']}', '{data['avg_resistance']}','{data['max_rpm']}', '{data['max_heart_rate']}', '{data['max_power']}', '{data['max_resistance']}');"""
     query_executer(conn, sql)
 
 
