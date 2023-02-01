@@ -111,12 +111,28 @@ def get_id_from_database_for_made_user():
     return
 
 
-def extract_duration_resistance_data(data):
-    return
+def extract_ride_duration_resistance_data(message: str):
+    words = {"Ride - duration": "duration", "resistance": "resistance"}
+    data = ast.literal_eval(test)["log"].split("[INFO]: ")[-1]
+    data_array = data.strip().split(";")
+    message_dict = {words[val.split("= ")[0].strip()]: val.split("= ")[-1] for val in data_array}
+
+    ride_dict = {'duration':message_dict['duration'],
+    'resistance':message_dict['resistance']}
+
+    return ride_dict
 
 
 def extract_ride_hrt_rpm_power(data):
-    return
+    words = {"Telemetry - hrt": "heart_rate", "rpm": "rpm", "power": "power"}
+    data = ast.literal_eval(message)["log"].split("[INFO]: ")[-1]
+    message_arr = data.strip().split(";")
+    message_dict = {words[val.split("= ")[0].strip()]: val.split("= ")[-1] for val in message_arr}  
+
+    ride_dict = {'heart_rate':message_dict['heart_rate'],
+    'rpm':message_dict['rpm'],'power':message_dict['power']}
+
+    return ride_dict
 
 
 def find_next_new_ride_id():
