@@ -1,6 +1,7 @@
 import re
 import datetime
 import ast
+from datetime import date
 
 def split_name(name: str) -> list:
     """Split fullname into a first and second name. Returns a list where the first element is the first name and the second element is the last name
@@ -162,3 +163,9 @@ def current_ride_timings(current_ride_data: list) -> dict:
         'duration': total_duration
     }
     return timings_dict
+
+
+def age_from_dob(born:datetime.date) -> int:
+    """Find user's age from DOB"""
+    today = date.today()
+    return today.year - born.year - ((today.month, today.day) < (born.month, born.day))
