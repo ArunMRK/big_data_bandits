@@ -1,6 +1,7 @@
 import re
 import datetime
 import ast
+from statistics import mean
 
 def split_name(name: str) -> list:
     """Split fullname into a first and second name. Returns a list where the first element is the first name and the second element is the last name
@@ -95,70 +96,59 @@ def extract_ride_hrt_rpm_power(message: str) -> dict:
 
     return ride_dict
 
-def list_average(ls: list) -> float:
-    return sum(ls) / len(ls)
 
 
 def current_ride_averages(current_ride_data: list) -> dict:
     """Takes in readings over a ride and returns average values for rpm, heart rate, power and resistance over the course of the ride"""
-    heart_readings = []
-    power_readings = []
-    rpm_readings = []
-    resistance_readings = []
-    for row in current_ride_data:
-        heart_readings.append(row['heart_rate'])
-        power_readings.append(row['power'])
-        rpm_readings.append(row['rpm'])
-        resistance_readings.append(row['resistance'])
-    avg_heart_readings = list_average(heart_readings)
-    avg_power_readings = list_average(power_readings)
-    avg_rpm_readings = list_average(rpm_readings)
-    avg_resistance_readings = list_average(resistance_readings)
+    heart_readings = current_ride_data["heart_rate"]
+    power_readings = current_ride_data["power"]
+    rpm_readings = current_ride_data["rpm"]
+    resistance_readings = current_ride_data["resistance"]
+
     averages_dict = {
-        'avg_rpm': avg_rpm_readings,
-        'avg_heart_rate': avg_heart_readings,
-        'avg_power': avg_power_readings,
-        'avg_resistance': avg_resistance_readings
+        'avg_rpm': mean(rpm_readings),
+        'avg_heart_rate': mean(heart_readings),
+        'avg_power': mean(power_readings),
+        'avg_resistance': mean(resistance_readings)
     }
+
     return averages_dict
 
 
 def current_ride_maximums(current_ride_data: list) -> dict:
     """Takes in readings over a ride, and returns max values for rpm, heart rate, power and resistance over the course of the ride"""
-    heart_readings = []
-    power_readings = []
-    rpm_readings = []
-    resistance_readings = []
-    for row in current_ride_data:
-        heart_readings.append(row['heart_rate'])
-        power_readings.append(row['power'])
-        rpm_readings.append(row['rpm'])
-        resistance_readings.append(row['resistance'])
-    max_heart_readings = list_average(heart_readings)
-    max_power_readings = list_average(power_readings)
-    max_rpm_readings = list_average(rpm_readings)
-    max_resistance_readings = list_average(resistance_readings)
+    heart_readings = current_ride_data["heart_rate"]
+    power_readings = current_ride_data["power"]
+    rpm_readings = current_ride_data["rpm"]
+    resistance_readings = current_ride_data["resistance"]
+
     maxima_dict = {
-        'avg_rpm': max_rpm_readings,
-        'avg_heart_rate': max_heart_readings,
-        'avg_power': max_power_readings,
-        'avg_resistance': max_resistance_readings
+        'max_rpm': max(heart_readings),
+        'max_heart_rate': max(power_readings),
+        'max_power': max(rpm_readings),
+        'max_resistance': max(resistance_readings)
     }
+
     return maxima_dict
 
 
 def current_ride_timings(current_ride_data: list) -> dict:
-    """Takes in readings over a ride and returns duration, and start and end timestamps"""
-    duration_readings = []
-    datetime_readings = []
-    for row in current_ride_data:
-        duration_readings.append(row['duration'])
-        datetime_readings.append(row['datetime'])
-    total_duration = max(duration_readings)
-    timeline = datetime_readings.sort()
+    """Takes in readings over a ride and returns duration, and start and end timestamps
+    """
+    duration_readings = current_ride_data["duration"]
+    datetime_readings = current_ride_data["datetime"]
+
+    total_duration = duration_readings[-1]
     timings_dict = {
-        'started': timeline[0],
-        'finished': timeline[-1],
+        'started': datetime_readings[0],
+        'finished': datetime_readings[-1],
         'duration': total_duration
     }
+
     return timings_dict
+
+
+def get_max_heart_rate(age: int) -> int:
+    """Determines the maximum working heart rate given the users age. This will be 85% of the maximum allowed heart rate for a given age
+    """
+    return round((220 - age) * 0.85)
