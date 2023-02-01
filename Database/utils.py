@@ -124,7 +124,7 @@ def current_ride_averages(current_ride_data: list) -> dict:
 
 
 def current_ride_maximums(current_ride_data: list) -> dict:
-    # Takes in readings over a ride and returns max values for rpm, heart rate, power and resistance over the course of the ride
+    # Takes in readings over a ride, and returns max values for rpm, heart rate, power and resistance over the course of the ride
     heart_readings = []
     power_readings = []
     rpm_readings = []
