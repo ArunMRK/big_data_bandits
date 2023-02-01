@@ -108,7 +108,7 @@ if __name__ == "__main__":
 
                 if 'beginning' in msg:
                     if ride_exists:
-                        # Aggregates data for this ride
+                        """Aggregates data for this ride"""
                         timings = current_ride_timings(current_ride_data)
                         averages = current_ride_averages(current_ride_data)
                         maximums = current_ride_maximums(current_ride_data)
