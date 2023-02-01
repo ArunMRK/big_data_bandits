@@ -129,8 +129,16 @@ def extract_ride_duration_resistance_data(message: str):
     return ride_dict
 
 
-def extract_ride_hrt_rpm_power(data):
-    return
+def extract_ride_hrt_rpm_power(message:str):
+    words = {"Telemetry - hrt": "heart_rate", "rpm": "rpm", "power": "power"}
+    data = ast.literal_eval(message)["log"].split("[INFO]: ")[-1]
+    message_arr = data.strip().split(";")
+    message_dict = {words[val.split("= ")[0].strip()]: val.split("= ")[-1] for val in message_arr}  
+
+    ride_dict = {'heart_rate':message_dict['heart_rate'],
+    'rpm':message_dict['rpm'],'power':message_dict['power']}
+
+    return ride_dict
 
 
 def find_next_new_ride_id():
