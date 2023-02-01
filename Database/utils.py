@@ -2,6 +2,7 @@ import re
 import datetime
 import ast
 from statistics import mean
+from datetime import date
 
 
 def split_name(name: str) -> list:
@@ -154,3 +155,9 @@ def get_max_heart_rate(age: int) -> int:
     """Determines the maximum working heart rate given the users age. This will be 85% of the maximum allowed heart rate for a given age
     """
     return round((220 - age) * 0.85)
+
+
+def age_from_dob(born: datetime.date) -> int:
+    """Find user's age from DOB"""
+    today = date.today()
+    return today.year - born.year - ((today.month, today.day) < (born.month, born.day))
