@@ -192,6 +192,18 @@ def combine_tables(user_id: int, date: datetime.time) -> NoReturn:
     query_executer(sql)
 
 
+def check_user_exists(user_id: int) -> bool:
+    """Checks whether a user already exists in user_details"""
+    sql = f"""SELECT * FROM user_details
+        WHERE user_id ='{user_id}'"""
+    result = query_executer(sql)
+
+    if result:
+        return True
+
+    return False
+
+
 bootstrap_servers = os.getenv('BOOTSTRAP_SERVERS')
 security_protocol = 'SASL_SSL'
 sasl_username = os.getenv('SASL_USERNAME')
@@ -248,10 +260,12 @@ while cont:
                 found_user = True
                 user_details = extract_user_details(msg)
                 user_id = user_details["user_id"]
-                upload_user_details_to_db(user_details)
-                date = extract_date(msg)
-                combine_tables(user_id, date)
-                ride_id = find_next_new_ride_id()
+
+                if not check_user_exists(user_id):
+                    upload_user_details_to_db(user_details)
+                    date = extract_date(msg)
+                    combine_tables(user_id, date)
+                    ride_id = find_next_new_ride_id()
 
             # (NEW DATA BUT NO CURRENTLY FOUND USER)
             elif 'user_id' not in msg and not found_user:
