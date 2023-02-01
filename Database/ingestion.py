@@ -9,79 +9,14 @@ from configparser import ConfigParser
 import pandas as pd
 import os
 from confluent_kafka import Consumer, KafkaError, TopicPartition, KafkaException, Producer
-import re
 from typing import NoReturn
 from sqlwrapper import *
-
+from utils import *
 
 
 load_dotenv(override=True, verbose=True)
 
 conn = get_db_connection()
-
-def split_name(name: str) -> list:
-    """Split fullname into a first and second name. Returns a list where the first element is the first name and the second element is the last name
-    """
-    exceptions = ["Mr", "Mrs", "Miss", "Dr", "Mx", "Prof", "Ms",
-                  "Mr.", "Mrs.", "Miss.", "Dr.", "Mx.", "Prof.", "Ms."]
-
-    if name:
-        split_name = name.split(" ")
-        if split_name[0] in exceptions:
-            return [split_name[1], split_name[-1]]
-        return [split_name[0], split_name[-1]]
-    else:
-        return [None, None]
-
-
-def unix_to_date(timestamp: int) -> datetime.date:
-    """Take in unix timestamp (in ms, so have to divide by 1,000 to get seconds) and return date"""
-    timestamp /= 1000
-    time_and_date = datetime.datetime.fromtimestamp(
-        timestamp)
-
-    return time_and_date.date()
-
-
-def extract_user_details(message: str) -> dict:
-    """Extracts the user details and stores them in a dict"""
-    data = ast.literal_eval(message)["log"]
-    user_data = data.split("data = ")[1]
-    raw_data = ast.literal_eval(user_data)
-
-    name = split_name(raw_data["name"])
-    dob_date = unix_to_date(raw_data["date_of_birth"])
-    date_created = unix_to_date(raw_data["account_create_date"])
-    full_address = raw_data["address"].split(",")
-    postcode = full_address[-1]
-    address = ", ".join(full_address[:-1])
-
-    user_dict = {"user_id": raw_data["user_id"], "first": name[0],
-                 "second": name[1], "address": address, "postcode": postcode,
-                 "dob_date": dob_date, "height": raw_data["height_cm"],
-                 "weight": raw_data["weight_kg"], "gender": raw_data["gender"],
-                 "email": raw_data["email_address"], "date_created": date_created,
-                 "original_source": raw_data["original_source"],
-                 "bike_serial": raw_data["bike_serial"]}
-    return user_dict
-
-
-def extract_date(message: str) -> datetime.time:
-    """Extracts the date from the kafka data"""
-    regex = "[0-9]{4}(-[0-9]{2}){2}"
-    result = re.search(regex, message).group(0)
-    date = datetime.datetime.strptime(result, '%Y-%m-%d').date()
-    print(date)
-    return date
-
-
-def extract_date_time(message: str) -> datetime.time:
-    """Extracts the date from the kafka data"""
-    regex = "[0-9]{4}(-[0-9]{2}){2} [0-9]{2}:[0-9]{2}:[0-9]{2}"
-    result = re.search(regex, message).group(0)
-    date = datetime.datetime.strptime(result, '%Y-%m-%d %H:%M:%S')
-    print(type(date))
-    return date
 
 
 def upload_user_details_to_db(details: dict) -> NoReturn:
@@ -92,34 +27,6 @@ def upload_user_details_to_db(details: dict) -> NoReturn:
     '{details['address']}', '{details['postcode']}', '{details['dob_date']}', '{details['height']}','{details['weight']}', '{details['gender']}', '{details['email']}', 
     '{details['date_created']}', '{details['original_source']}', '{details['bike_serial']}');"""
     query_executer(conn ,sql)
-
-
-def extract_ride_duration_resistance_data(message: str):
-    """Extracting the Duration-Resistance data from log"""
-    words = {"Ride - duration": "duration", "resistance": "resistance"}
-    test = str(message)
-    data = ast.literal_eval(test)["log"].split("[INFO]: ")[-1]
-    data_array = data.strip().split(";")
-    date_time = extract_date_time(message)
-    message_dict = {words[val.split("= ")[0].strip()]: val.split(
-        "= ")[-1] for val in data_array}
-    ride_dict = {'duration': message_dict['duration'],
-                 'resistance': message_dict['resistance'], 'date_time': date_time}
-
-    return ride_dict
-
-
-def extract_ride_hrt_rpm_power(message: str):
-    words = {"Telemetry - hrt": "heart_rate", "rpm": "rpm", "power": "power"}
-    data = ast.literal_eval(message)["log"].split("[INFO]: ")[-1]
-    message_arr = data.strip().split(";")
-    message_dict = {words[val.split("= ")[0].strip()]: val.split(
-        "= ")[-1] for val in message_arr}
-
-    ride_dict = {'heart_rate': message_dict['heart_rate'],
-                 'rpm': message_dict['rpm'], 'power': message_dict['power']}
-
-    return ride_dict
 
 
 def find_next_new_ride_id() -> int:
@@ -135,8 +42,9 @@ def find_next_new_ride_id() -> int:
 
 
 def upload_ride_data_for_id(
-    ride_id: int, ride_duration_resistance: dict, ride_hrt_rpm_power: dict
-) -> NoReturn:
+        ride_id: int, ride_duration_resistance: dict, ride_hrt_rpm_power: dict
+    ) -> NoReturn:
+    """Uploading the ride data to the data warehouse"""
     sql = f"""INSERT INTO ride_details (ride_id, duration, date_time, resistance, heart_rate,
     rpm, power) 
     VALUES 
@@ -186,7 +94,6 @@ c = Consumer({
     "client.id": 'id-002-005',
 })
 
-values = []
 cont = True
 topic = 'deloton'
 
@@ -197,6 +104,8 @@ found_user = False
 user_id = None
 ride_id = None
 ready_to_process = False
+current_ride_data = []
+user_details = None
 
 print(f'Kafka set to run set to: {cont}, adjust `cont` to change')
 while cont:
@@ -205,14 +114,21 @@ while cont:
         if not message:
             print('None')
         else:
+            print(current_ride_data)
             msg = message.value().decode()
-            print(msg)
 
             if 'beginning' in msg:
+                if current_ride_data:
+                    # TODO: if current ride data exists, we need to aggregate it and push it to the warehouse
+                    if not check_user_exists(user_id):
+                        upload_user_details_to_db(user_details)
+                        date = extract_date(msg)
+
                 found_user = False
                 user_id = None
                 ride_id = None
-                ready_to_process = False
+                user_details = None
+                current_ride_data = []
                 print('pass over message for new USER incoming')
 
             # (NEW USER ENTRY)
@@ -221,13 +137,8 @@ while cont:
                 # ** code for uploading user details to database **
                 found_user = True
                 user_details = extract_user_details(msg)
+                print(user_details)
                 user_id = user_details["user_id"]
-
-                if not check_user_exists(user_id):
-                    upload_user_details_to_db(user_details)
-                    date = extract_date(msg)
-                    combine_tables(user_id, date)
-                    ride_id = find_next_new_ride_id()
 
             # (NEW DATA BUT NO CURRENTLY FOUND USER)
             elif 'user_id' not in msg and not found_user:
@@ -247,9 +158,12 @@ while cont:
 
                 # (CHECK FOR NEW RIDE ESTABLISHED BY NEW USER INPUT)
                 if ready_to_process:
-                    print("adding row to database")
-                    upload_ride_data_for_id(
-                        ride_id, ride_duration_resistance, ride_hrt_rpm_power)
+                    print("adding element to list")
+                    details_dict = {
+                        **ride_duration_resistance, **ride_hrt_rpm_power
+                        }
+                    current_ride_data.append(details_dict)
+                    print(current_ride_data)
                     ready_to_process = False
 
     except KeyboardInterrupt:
