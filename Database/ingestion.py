@@ -40,9 +40,10 @@ conn = get_db_connection()
 
 
 def query_executer(query: str, params: tuple=()) -> list:
+    """An executor function for executing sql statements"""
     if conn != None:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-            try:
+            # try:
                 cur.execute(query, params)
                 conn.commit()
                 try:
@@ -50,8 +51,8 @@ def query_executer(query: str, params: tuple=()) -> list:
                     return returned_data
                 except:
                     print('No results to fetch')
-            except:
-                return "Error executing query."
+            # except:
+            #     return "Error executing query."
     else:
         return "No connection"
 
@@ -102,11 +103,20 @@ def extract_date(message: str) -> datetime.time:
     regex = "[0-9]{4}(-[0-9]{2}){2}"
     result = re.search(regex, message).group(0)
     date = datetime.datetime.strptime(result, '%Y-%m-%d').date()
+    print(date)
+    return date
 
+def extract_date_time(message: str) -> datetime.time:
+    """Extracts the date from the kafka data"""
+    regex = "[0-9]{4}(-[0-9]{2}){2} [0-9]{2}:[0-9]{2}:[0-9]{2}"
+    result = re.search(regex, message).group(0)
+    date = datetime.datetime.strptime(result, '%Y-%m-%d %H:%M:%S')
+    print(type(date))
     return date
 
 
 def upload_user_details_to_db(details: dict) -> NoReturn:
+    """Uploads given details into the user_details table""" 
     sql = f"""INSERT INTO user_details (user_id, first, second, address, postcode, 
     dob_date, height, weight, gender, email, date_created, original_source, bike_serial)
     VALUES  ('{details['user_id']}', '{details['first']}', '{details['second']}', 
@@ -119,15 +129,16 @@ def get_id_from_database_for_made_user():
     return
 
 
-def extract_ride_duration_resistance_data(message: str) -> dict:
+def extract_ride_duration_resistance_data(message: str):
+    """Extracting the Duration-Resistance data from log"""
     words = {"Ride - duration": "duration", "resistance": "resistance"}
     test = str(message)
     data = ast.literal_eval(test)["log"].split("[INFO]: ")[-1]
     data_array = data.strip().split(";")
+    date_time = extract_date_time(message)
     message_dict = {words[val.split("= ")[0].strip()]: val.split("= ")[-1] for val in data_array}
-
     ride_dict = {'duration':message_dict['duration'],
-    'resistance':message_dict['resistance']}
+    'resistance':message_dict['resistance'], 'date_time':date_time}
 
     return ride_dict
 
@@ -160,22 +171,20 @@ def upload_ride_data_for_id(
     ride_id: int, ride_duration_resistance: dict, ride_hrt_rpm_power: dict
     ) -> NoReturn:
     sql = f"""INSERT INTO ride_details (ride_id, duration, date_time, resistance, heart_rate,
-    rpm, power) VALUES ('{ride_id}', '{ride_duration_resistance['duration']}', 
+    rpm, power) 
+    VALUES 
+    ('{ride_id}', '{ride_duration_resistance['duration']}', 
     '{ride_duration_resistance['date_time']}', 
     '{ride_duration_resistance['resistance']}', '{ride_hrt_rpm_power['heart_rate']}',
-    '{ride_hrt_rpm_power['rpm']}', '{ride_hrt_rpm_power['power']}'"""
+    '{ride_hrt_rpm_power['rpm']}', '{ride_hrt_rpm_power['power']}');"""
     query_executer(sql)
 
 
 def combine_tables(ride_id: int, user_id: int, date: datetime.time) -> NoReturn:
+    """Function that executes code for adding data to the joining middle table user_ride"""
     sql = f"""INSERT INTO user_ride (ride_id, user_id, date) VALUES
         ('{ride_id}', '{user_id}', '{date}')"""
     query_executer(sql)
-
-
-test_data_ride_duration = '{"log": "2022-07-25 16:13:31.709082 mendoza v9: [INFO]: Ride - duration = 454.0; resistance = 60\n"}'
-test_data_hrt = '{"log": "2022-07-25 16:13:32.209086 mendoza v9: [INFO]: Telemetry - hrt = 0; rpm = 30; power = 11.22896664\n"}'
-
 
 bootstrap_servers = os.getenv('BOOTSTRAP_SERVERS')
 security_protocol = 'SASL_SSL'
@@ -225,8 +234,8 @@ while cont == True:
             # (NEW USER ENTRY)
             elif 'user_id' in msg['log']:
 
-                found_user = True
                 # ** code for uploading user details to database **
+                found_user = True
                 user_details = extract_user_details(msg)
                 upload_user_details_to_db(user_details)
                 user_id = get_id_from_database_for_made_user()
@@ -243,7 +252,7 @@ while cont == True:
 
                 # get first parts of data
                 if 'Ride - duration' in msg['log']:
-                    ride_duration_resistance = extract_duration_resistance_data(
+                    ride_duration_resistance = extract_ride_duration_resistance_data(
                         msg)
 
                 elif 'Telemetry - hrt' in msg['log']:
