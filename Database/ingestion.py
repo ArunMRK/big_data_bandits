@@ -123,7 +123,7 @@ def extract_ride_duration_resistance_data(message: str):
     return ride_dict
 
 
-def extract_ride_hrt_rpm_power(data):
+def extract_ride_hrt_rpm_power(message:str):
     words = {"Telemetry - hrt": "heart_rate", "rpm": "rpm", "power": "power"}
     data = ast.literal_eval(message)["log"].split("[INFO]: ")[-1]
     message_arr = data.strip().split(";")
