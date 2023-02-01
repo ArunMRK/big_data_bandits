@@ -9,53 +9,15 @@ from configparser import ConfigParser
 import pandas as pd
 import os
 from confluent_kafka import Consumer, KafkaError, TopicPartition, KafkaException, Producer
-import psycopg2
-import psycopg2.extras
 import re
 from typing import NoReturn
+from sqlwrapper import *
+
+
 
 load_dotenv(override=True, verbose=True)
 
-# Getting Data from Aurora RDBS AWS source
-rds_db = os.getenv('RDS_DB_NAME')
-rds_user = os.getenv('RDS_USER')
-rds_password = os.getenv('RDS_PASSWORD')
-rds_host = os.getenv('RDS_HOST')
-
-
-def get_db_connection() -> psycopg2.extensions.connection:
-    """ Create a connection for database postgres Aurora"""
-    try:
-        conn = psycopg2.connect(f"""
-    dbname={rds_db}
-    user={rds_user} 
-    password={rds_password}
-    host={rds_host}""")
-        return conn
-    except:
-        print("Error connecting to database.")
-
-
 conn = get_db_connection()
-
-
-def query_executer(query: str, params: tuple = ()) -> list:
-    """An executor function for executing sql statements"""
-    if conn != None:
-        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-            # try:
-            cur.execute(query, params)
-            conn.commit()
-            try:
-                returned_data = cur.fetchall()
-                return returned_data
-            except:
-                print('No results to fetch')
-            # except:
-            #     return "Error executing query."
-    else:
-        return "No connection"
-
 
 def split_name(name: str) -> list:
     """Split fullname into a first and second name. Returns a list where the first element is the first name and the second element is the last name
@@ -129,7 +91,7 @@ def upload_user_details_to_db(details: dict) -> NoReturn:
     VALUES  ('{details['user_id']}', '{details['first']}', '{details['second']}', 
     '{details['address']}', '{details['postcode']}', '{details['dob_date']}', '{details['height']}','{details['weight']}', '{details['gender']}', '{details['email']}', 
     '{details['date_created']}', '{details['original_source']}', '{details['bike_serial']}');"""
-    query_executer(sql)
+    query_executer(conn ,sql)
 
 
 def extract_ride_duration_resistance_data(message: str):
@@ -165,7 +127,7 @@ def find_next_new_ride_id() -> int:
     sql = f"""SELECT ride_id FROM user_ride
         ORDER BY ride_id DESC
         LIMIT 1;"""
-    result = query_executer(sql)
+    result = query_executer(conn ,sql)
 
     for val in result:
         # need to extract the values from result and turn it into a list
@@ -182,21 +144,21 @@ def upload_ride_data_for_id(
     '{ride_duration_resistance['date_time']}', 
     '{ride_duration_resistance['resistance']}', '{ride_hrt_rpm_power['heart_rate']}',
     '{ride_hrt_rpm_power['rpm']}', '{ride_hrt_rpm_power['power']}');"""
-    query_executer(sql)
+    query_executer(conn, sql)
 
 
 def combine_tables(user_id: int, date: datetime.time) -> NoReturn:
     """Function that executes code for adding data to the joining middle table user_ride"""
     sql = f"""INSERT INTO user_ride (user_id, date) VALUES
         ('{user_id}', '{date}')"""
-    query_executer(sql)
+    query_executer(conn, sql)
 
 
 def check_user_exists(user_id: int) -> bool:
     """Checks whether a user already exists in user_details"""
     sql = f"""SELECT * FROM user_details
         WHERE user_id ='{user_id}'"""
-    result = query_executer(sql)
+    result = query_executer(conn, sql)
 
     if result:
         return True
