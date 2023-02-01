@@ -133,7 +133,7 @@ if __name__ == "__main__":
                     user_details = extract_user_details(msg)
                     print(user_details)
                     user_id = user_details["user_id"]
-                    user_age=age_from_dob(user_details['dob_date'])
+                    user_age = age_from_dob(user_details['dob_date'])
                     ride_exists = True
 
                 # (NEW DATA BUT NO CURRENTLY FOUND USER)
