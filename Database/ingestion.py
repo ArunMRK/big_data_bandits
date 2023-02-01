@@ -113,6 +113,8 @@ if __name__ == "__main__":
                         averages = current_ride_averages(current_ride_data)
                         maximums = current_ride_maximums(current_ride_data)
                         current_ride_details = {**timings, **averages, **maximums}
+                        upload_ride_data_for_user_id(user_id, current_ride_details)
+
                         if not check_user_exists(user_id):
                             upload_user_details_to_db(user_details)
                             date = extract_date(msg)
