@@ -12,6 +12,7 @@ from confluent_kafka import Consumer, KafkaError, TopicPartition, KafkaException
 import psycopg2
 import psycopg2.extras
 import re
+from typing import NoReturn
 
 load_dotenv(override=True, verbose=True)
 
@@ -22,7 +23,7 @@ rds_password = os.getenv('RDS_PASSWORD')
 rds_host = os.getenv('RDS_HOST')
 
 
-def get_db_connection():
+def get_db_connection() -> psycopg2.extensions.connection:
     """ Create a connection for database postgres Aurora"""
     try:
         conn = psycopg2.connect(f"""
@@ -34,9 +35,11 @@ def get_db_connection():
     except:
         print("Error connecting to database.")
 
+
 conn = get_db_connection()
 
-def query_executer(query, params=()):
+
+def query_executer(query: str, params: tuple=()) -> list:
     if conn != None:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
             try:
@@ -67,6 +70,7 @@ def unix_to_date(timestamp: int) -> datetime.date:
     timestamp /= 1000
     time_and_date = datetime.datetime.fromtimestamp(
         timestamp)
+
     return time_and_date.date()
 
 
@@ -102,7 +106,7 @@ def extract_date(message: str) -> datetime.time:
     return date
 
 
-def upload_user_details_to_db(details):
+def upload_user_details_to_db(details: dict) -> NoReturn:
     sql = f"""INSERT INTO user_details (user_id, first, second, address, postcode, 
     dob_date, height, weight, gender, email, date_created, original_source, bike_serial)
     VALUES  ('{details['user_id']}', '{details['first']}', '{details['second']}', 
@@ -115,13 +119,12 @@ def get_id_from_database_for_made_user():
     return
 
 
-def extract_ride_duration_resistance_data(message: str):
+def extract_ride_duration_resistance_data(message: str) -> dict:
     words = {"Ride - duration": "duration", "resistance": "resistance"}
     test = str(message)
     data = ast.literal_eval(test)["log"].split("[INFO]: ")[-1]
     data_array = data.strip().split(";")
     message_dict = {words[val.split("= ")[0].strip()]: val.split("= ")[-1] for val in data_array}
-
 
     ride_dict = {'duration':message_dict['duration'],
     'resistance':message_dict['resistance']}
@@ -141,11 +144,21 @@ def extract_ride_hrt_rpm_power(message:str):
     return ride_dict
 
 
-def find_next_new_ride_id():
-    return
+def find_next_new_ride_id() -> int:
+    """Returns the ride_id of the current/most recent ride"""
+    sql = f"""SELECT ride_id FROM user_ride
+        ORDER BY ride_id DESC
+        LIMIT 1;"""
+    result = query_executer(sql)
+
+    for val in result:
+        # need to extract the values from result and turn it into a list
+        return list(val.values())[0]
 
 
-def upload_ride_data_for_id(ride_id, ride_duration_resistance, ride_hrt_rpm_power):
+def upload_ride_data_for_id(
+    ride_id: int, ride_duration_resistance: dict, ride_hrt_rpm_power: dict
+    ) -> NoReturn:
     sql = f"""INSERT INTO ride_details (ride_id, duration, date_time, resistance, heart_rate,
     rpm, power) VALUES ('{ride_id}', '{ride_duration_resistance['duration']}', 
     '{ride_duration_resistance['date_time']}', 
@@ -154,10 +167,11 @@ def upload_ride_data_for_id(ride_id, ride_duration_resistance, ride_hrt_rpm_powe
     query_executer(sql)
 
 
-def combine_tables(ride_id, user_id, date):
+def combine_tables(ride_id: int, user_id: int, date: datetime.time) -> NoReturn:
     sql = f"""INSERT INTO user_ride (ride_id, user_id, date) VALUES
         ('{ride_id}', '{user_id}', '{date}')"""
     query_executer(sql)
+
 
 test_data_ride_duration = '{"log": "2022-07-25 16:13:31.709082 mendoza v9: [INFO]: Ride - duration = 454.0; resistance = 60\n"}'
 test_data_hrt = '{"log": "2022-07-25 16:13:32.209086 mendoza v9: [INFO]: Telemetry - hrt = 0; rpm = 30; power = 11.22896664\n"}'
