@@ -15,12 +15,12 @@ app.layout = \
         # Interval timers for updating graphs
         dcc.Interval(
              id='user-interval-component',
-             interval=60*60,
+             interval=60,
              n_intervals=0
              ),
         dcc.Interval(
             id='rides-interval-component',
-            interval=60*60*15,
+            interval=60*15,
             n_intervals=0
         ),
 
@@ -301,9 +301,9 @@ def update_rpm_div(tab, n):
 def update_rpm_div(tab, n):
     if tab == 'tab-current':
         resistance = '30'
-        return f'{resistance} Kg'
+        return f'{resistance}'
     resistance = '50'
-    return f'{resistance} Kg'
+    return f'{resistance}'
     
 
 # Update Text for AGGREGATEs
