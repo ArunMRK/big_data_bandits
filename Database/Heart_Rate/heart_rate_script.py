@@ -47,7 +47,7 @@ Big Data Bandits</p>""",
             },
             'Subject': {
                 'Charset': 'UTF-8',
-                'Data': 'High Heart Rate Alert',
+                'Data': f'High heart rate alert for user {user_alert_data["first"]} {user_alert_data["second"]} with a heart rate of {user_alert_data["user_heart_rate"]} bpm',
             },
         },
         Source='big.data.bandits@gmail.com',
