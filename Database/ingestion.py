@@ -2,6 +2,7 @@ from utils import *
 from sqlwrapper import *
 from Heart_Rate.heart_rate_script import *
 from kafka_consumer import *
+import datetime
 
 conn = get_db_connection()
 
@@ -19,7 +20,7 @@ if __name__ == "__main__":
     }
     heart_rate_counter = 0
     max_user_heart_rate = 0
-    notification_sent = True  # turn back to false when I can send emails again
+    notification_sent = False
 
     while True:
         message = get_kafka_message(c)
@@ -32,7 +33,8 @@ if __name__ == "__main__":
                     if not check_user_exists(conn, user_id):
                         upload_user_details_to_db(conn, user_details)
 
-                    print("Loading data to data warehouse...")
+                    print(
+                        f"{datetime.datetime.now()}: Loading data to data warehouse...")
                     current_ride_details = current_ride_summary(
                         current_ride_data)
                     upload_ride_data_for_user_id(
@@ -48,11 +50,11 @@ if __name__ == "__main__":
                 }
                 heart_rate_counter = 0
                 max_user_heart_rate = 0
-                notification_sent = True
+                notification_sent = False
 
             # new user found block
             elif 'user_id' in message:
-                print("New user found in stream...")
+                print(f"{{datetime.datetime.now()}}: New user found in stream...")
                 found_user = True
                 ride_exists = True
 
@@ -89,7 +91,10 @@ if __name__ == "__main__":
                         # sends email if heart rate is dangerous
                         user_alert_data = get_user_details(
                             user_age, user_details["first"], user_details["second"], max_user_heart_rate, max_heart_rate, ride_duration_resistance["date_time"])
-                        email_alert(user_alert_data)
+                        try:
+                            email_alert(user_alert_data)
+                        except:
+                            print("Email unsuccessful")
                         notification_sent = True
 
                 current_ride_data["heart_rate"].append(heart_rate)
