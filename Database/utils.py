@@ -43,12 +43,13 @@ def extract_user_details(message: str) -> dict:
     postcode = full_address[-1]
     address = ", ".join(full_address[:-1])
 
-    user_dict = {"user_id": raw_data["user_id"], "first": name[0],
-                 "second": name[1], "address": address, "postcode": postcode,
+    # need to escape all ' when adding data to a database using sql
+    user_dict = {"user_id": raw_data["user_id"], "first": name[0].replace("'", "''"),
+                 "second": name[1].replace("'", "''"), "address": address.replace("'", "''"), "postcode": postcode,
                  "dob_date": dob_date, "height": raw_data["height_cm"],
                  "weight": raw_data["weight_kg"], "gender": raw_data["gender"],
                  "email": raw_data["email_address"], "date_created": date_created,
-                 "original_source": raw_data["original_source"],
+                 "original_source": raw_data["original_source"].replace("'", "''"),
                  "bike_serial": raw_data["bike_serial"]}
 
     return user_dict
