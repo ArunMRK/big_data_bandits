@@ -38,7 +38,7 @@ def query_executer(
                 returned_data = cur.fetchall()
                 return returned_data
             except:
-                print("No results to fetch")
+                print("Executing query - no result to return")
     else:
         return "No connection"
 
