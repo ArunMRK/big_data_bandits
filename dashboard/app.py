@@ -6,21 +6,23 @@ import psycopg2.extras
 import os
 from dotenv import load_dotenv
 import dash
+import dash_bootstrap_components as dbc
 
 
-app = Dash(__name__)  # use_pages=True)
+app = Dash(__name__, external_stylesheets=[
+           dbc.themes.COSMO])  # use_pages=True)
 
 app.layout = \
     html.Div([
         # Interval timers for updating graphs
         dcc.Interval(
              id='user-interval-component',
-             interval=60,
+             interval=60*1000,
              n_intervals=0
              ),
         dcc.Interval(
             id='rides-interval-component',
-            interval=60*15,
+            interval=60*15*1000,
             n_intervals=0
         ),
 
@@ -28,41 +30,45 @@ app.layout = \
         html.Div([
             # title wrapper div
             html.Div([
-                html.H1(children='Current Riders Stats:')
-            ], style={"display": "inline-block", 'width': '70%'}),
+                html.H2(children='Current Rider: ')
+            ], style={"display": "inline-block", 'width': '20%'}),
             # div for last updated text
             html.Div([
                 html.Div([
                     # last updated text ('last updated 30 seconds ago..')
+                    html.H1(id='name-id')
                 ]),
-                html.Div([
-                    # white space (lifts above div higher)
-                ]),
-            ], style={"display": "inline-block", 'width': '30%'}),
+                # html.Div([
+                #     # white space (lifts above div higher)
+                # ]),
+            ], style={"display": "inline-block", 'width': '70%'}),
+        ]),
+        html.Div([
+            html.Hr()
         ]),
 
         # User details div
         html.Div([
             html.Div([
-                # name
-                html.Div(id='name-id'),
-            ], style={"display": "inline-block", 'width': '30%'}),
-            html.Div([
                 # age
-                html.Div(id='age-id'),
-            ], style={"display": "inline-block", 'width': '20%'}),
+                html.Div(
+                    id='age-id', style={'text-align': 'center', 'font-size': '20px'}),
+            ], style={"display": "inline-block", 'width': '25%'}),
             html.Div([
                 # gender
-                html.Div(id='gender-id'),
-            ], style={"display": "inline-block", 'width': '20%'}),
+                html.Div(id='gender-id',
+                         style={'text-align': 'center', 'font-size': '20px'}),
+            ], style={"display": "inline-block", 'width': '25%'}),
             html.Div([
                 # weight
-                html.Div(id='weight-id'),
-            ], style={"display": "inline-block", 'width': '15%'}),
+                html.Div(id='weight-id',
+                         style={'text-align': 'center', 'font-size': '20px'}),
+            ], style={"display": "inline-block", 'width': '25%'}),
             html.Div([
                 # height
-                html.Div(id='height-id'),
-            ], style={"display": "inline-block", 'width': '15%'}),
+                html.Div(id='height-id',
+                         style={'text-align': 'center', 'font-size': '20px'}),
+            ], style={"display": "inline-block", 'width': '25%'}),
         ]),
 
         # Horizontal row
@@ -74,18 +80,21 @@ app.layout = \
         html.Div([
             # Wrapper
             html.Div([
-                html.H2('Users Stats'),
+                html.H2('Users Stats:', style={'text-align': 'top'}),
                 html.Div([
                     # Duration
-                    html.Div(id='duration-id'),
+                    html.Div(
+                        id='duration-id', style={'text-align': 'center', 'font-size': '20px'}),
                 ], style={"display": "inline-block", 'width': '33%', 'justify': 'center'}),
                 html.Div([
                     # BPM
-                    html.Div(id='bpm-id'),
+                    html.Div(
+                        id='bpm-id', style={'text-align': 'center', 'font-weight': 'bold', 'font-size': '20px'}),
                 ], style={"display": "inline-block", 'width': '33%'}),
                 html.Div([
                     # Total Power
-                    html.Div(id='user-total-power-id'),
+                    html.Div(id='user-total-power-id',
+                             style={'text-align': 'center', 'font-size': '20px'}),
                 ], style={"display": "inline-block", 'width': '33%'}),
             ], style={"display": "inline-block", 'width': '50%'}),
 
@@ -101,19 +110,22 @@ app.layout = \
                 html.Div([
                     html.Div([
                         # current/max RPM
-                        html.Div(id='rpm-id'),
+                        html.Div(
+                            id='rpm-id', style={'text-align': 'center', 'font-size': '20px'}),
                     ], style={"display": "inline-block", 'width': '33%'}),
                     html.Div([
                         # current/max Power
-                        html.Div(id='user-power-id'),
+                        html.Div(
+                            id='user-power-id', style={'text-align': 'center', 'font-size': '20px'}),
                     ], style={"display": "inline-block", 'width': '33%'}),
                     html.Div([
                         # current/max Resistance
-                        html.Div(id='user-resistance-id'),
+                        html.Div(
+                            id='user-resistance-id', style={'text-align': 'center', 'font-size': '20px'}),
                     ], style={"display": "inline-block", 'width': '33%'}),
                 ], style={'padding-top': '20px'}),
             ], style={"display": "inline-block", 'width': '50%'}),
-        ], style={'padding-top': '10px'}),
+        ], style={'padding-top': '5px'}),
 
         # Horizontal row
         html.Div([
@@ -126,34 +138,48 @@ app.layout = \
             html.Div([
                 # Rides Details title
                 html.H1(children='Rides Stats (12 hourly):')
-            ], style={"display": "inline-block", 'width': '70%'}),
+            ], style={"display": "inline-block", 'width': '33%'}),
+
             # div for last updated text / button
             html.Div([
                 html.Div([
-                    # last updated text ('last updated 30 seconds ago..')
+                    html.Div([
+                        # Average out put aggregation text
+                        html.Div(id='avg-power-output-agg-id',
+                                 style={'text-align': 'center', 'font-size': '18px'})
+                    ], style={"display": "inline-block", 'width': '50%'}),
+                    html.Div([
+                        # Total power output
+                        html.Div(id='total-power-output-agg-id',
+                                 style={'text-align': 'center', 'font-size': '18px'})
+                    ], style={"display": "inline-block", 'width': '50%'}),
                 ]),
-                html.Div([
+            ], style={"display": "inline-block", 'width': '47%'}),
+
+            # Tabs
+            html.Div([
                     dcc.Tabs(id="tabs-graphs", value='tab-male',
                              children=[
                                  dcc.Tab(label='Pie', value='tab-pie'),
                                  dcc.Tab(label='Bar', value='tab-bar'),
                              ]
-                             ),
-                ]),
-            ], style={"display": "inline-block", 'width': '30%'}),
+                    ),
+                ], style={"display": "inline-block", 'width': '20%'}),
         ]),
 
-        # Aggregations summary div
-        html.Div([
-            html.Div([
-                # Average out put aggregation text
-                html.Div(id='avg-power-output-agg-id', style={'text-align':'center'})
-            ], style={"display": "inline-block", 'width': '50%'}),
-            html.Div([
-                # Total power output
-                html.Div(id='total-power-output-agg-id', style={'text-align':'center'})
-            ], style={"display": "inline-block", 'width': '50%'}),
-        ], style={'padding-top':'20px'}),
+        # # Aggregations summary div
+        # html.Div([
+        #     html.Div([
+        #         # Average out put aggregation text
+        #         html.Div(id='avg-power-output-agg-id',
+        #                  style={'text-align': 'center', 'font-size': '20px'})
+        #     ], style={"display": "inline-block", 'width': '50%'}),
+        #     html.Div([
+        #         # Total power output
+        #         html.Div(id='total-power-output-agg-id',
+        #                  style={'text-align': 'center', 'font-size': '20px'})
+        #     ], style={"display": "inline-block", 'width': '50%'}),
+        # ], style={'padding-top': '20px'}),
 
         # Graphs by gender div
         html.Div([
@@ -175,7 +201,7 @@ app.layout = \
             dcc.Graph(
                 id='age-aggregation-graph-id'),
         ]),
-    ])
+    ], style={'padding-left': '20px', 'padding-right': '20px', 'padding-top': '20px'})
 
 # update name
 
@@ -246,6 +272,8 @@ def update_duration_div(n):
     return f'{duration} seconds'
 
 # update duration
+
+
 @app.callback(
     Output(component_id='bpm-id', component_property='children'),
     Input('user-interval-component', 'n_intervals'),
@@ -253,6 +281,17 @@ def update_duration_div(n):
 def update_bpm_div(n):
     bpm = '92'
     return f'{bpm} BPM'
+
+@app.callback(
+    Output(component_id='bpm-id', component_property='style'),
+    Input('user-interval-component', 'n_intervals'),
+)
+def update_bpm_div_color(n):
+    #  TODO: CODE FOR checking heart range in healthy range
+    bpm = 89
+    if bpm > 90:
+        return {'text-align': 'center', 'font-weight': 'bold', 'font-size': '20px', 'color':'red'}
+    return {'text-align': 'center', 'font-weight': 'bold', 'font-size': '20px', 'color':'green'}
 
 
 # update total power
@@ -267,10 +306,12 @@ def update_power_div(n):
 # User stats updated by the choice of tab
 
 # update user power
+
+
 @app.callback(
     Output(component_id='user-power-id', component_property='children'),
     [Input('tabs-current-max', 'value'),
-    Input('user-interval-component', 'n_intervals') ]
+     Input('user-interval-component', 'n_intervals')]
 )
 def update_bpm_div(tab, n):
     if tab == 'tab-current':
@@ -280,10 +321,12 @@ def update_bpm_div(tab, n):
     return f'{user_power} W'
 
 # update user RPM
+
+
 @app.callback(
     Output(component_id='rpm-id', component_property='children'),
     [Input('tabs-current-max', 'value'),
-    Input('user-interval-component', 'n_intervals')]
+     Input('user-interval-component', 'n_intervals')]
 )
 def update_rpm_div(tab, n):
     if tab == 'tab-current':
@@ -293,10 +336,12 @@ def update_rpm_div(tab, n):
     return f'{rpm} RPM'
 
 # update user resistance
+
+
 @app.callback(
     Output(component_id='user-resistance-id', component_property='children'),
-    [ Input('tabs-current-max', 'value'),
-     Input('user-interval-component', 'n_intervals') ]
+    [Input('tabs-current-max', 'value'),
+     Input('user-interval-component', 'n_intervals')]
 )
 def update_rpm_div(tab, n):
     if tab == 'tab-current':
@@ -304,13 +349,14 @@ def update_rpm_div(tab, n):
         return f'{resistance}'
     resistance = '50'
     return f'{resistance}'
-    
+
 
 # Update Text for AGGREGATEs
 
 # update user power output average
 @app.callback(
-    Output(component_id='avg-power-output-agg-id', component_property='children'),
+    Output(component_id='avg-power-output-agg-id',
+           component_property='children'),
     Input('rides-interval-component', 'n_intervals'),
 )
 def update_rpm_div(n):
@@ -318,8 +364,11 @@ def update_rpm_div(n):
     return f'Average Power output: {average_power_output} W'
 
 # total power aggregate
+
+
 @app.callback(
-    Output(component_id='total-power-output-agg-id', component_property='children'),
+    Output(component_id='total-power-output-agg-id',
+           component_property='children'),
     Input('rides-interval-component', 'n_intervals')
 )
 def update_rpm_div(n):
@@ -327,43 +376,48 @@ def update_rpm_div(n):
     return f'Total Power output: {total_power_output} W'
 
 
-# Update Graphs 
+# Update Graphs
 
 # duration of rides split by gender graphs
 @app.callback(
-    Output(component_id='duration-rides-graph-id', component_property='figure'),
+    Output(component_id='duration-rides-graph-id',
+           component_property='figure'),
     [Input('tabs-graphs', 'value'),
-    Input('rides-interval-component', 'n_intervals')]
+     Input('rides-interval-component', 'n_intervals')]
 )
-def update_rpm_div(tab ,n):
+def update_rpm_div(tab, n):
     if tab == 'Pie':
-        # RETURN PIE GRAPH FOR average duration split by gender
-        return 
-    # RETURN BAR GRAPH FOR average duration split by gender
+        # TODO: RETURN PIE GRAPH FOR average duration split by gender
+        return
+    # TODO: RETURN BAR GRAPH FOR average duration split by gender
     return
 
 # avg number of of rides split by gender
+
+
 @app.callback(
     Output(component_id='num-rides-graph-id', component_property='figure'),
     [Input('tabs-graphs', 'value'),
-    Input('rides-interval-component', 'n_intervals')]
+     Input('rides-interval-component', 'n_intervals')]
 )
-def update_rpm_div(tab ,n):
+def update_rpm_div(tab, n):
     if tab == 'Pie':
-        # RETURN PIE GRAPH FOR number of rides split by gender
-        return 
-    # RETURN BAR GRAPH FOR average number of rides split by gender
+        # TODO: RETURN PIE GRAPH FOR number of rides split by gender
+        return
+    # TODO: RETURN BAR GRAPH FOR average number of rides split by gender
     return
 
 # avg number of of rides split by gender
+
+
 @app.callback(
-    Output(component_id='age-aggregation-graph-id', component_property='figure'),
+    Output(component_id='age-aggregation-graph-id',
+           component_property='figure'),
     Input('rides-interval-component', 'n_intervals')
 )
 def update_rpm_div(n):
-    # GRAPH FOR AGE DISTRIBUTION OF RIDES
+    # TODO: GRAPH FOR AGE DISTRIBUTION OF RIDES
     return
-
 
 
 """Putting this here for now, to test locally"""
