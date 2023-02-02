@@ -33,6 +33,9 @@ INSERT CRITICAL INFO HERE
 ## Contributors
 -----------------
 - Big Data Bandits
-            - Justas Bauras(Project Manager I, Engineer)
-            - Ben Douglas-Griffiths (Quality Assurance I, Engineer)
-            - Arun Kalia (Architect I, Engineer)
+            - 
+            Justas Bauras(Project Manager I, Engineer)
+            - 
+            Ben Douglas-Griffiths (Quality Assurance I, Engineer)
+            - 
+            Arun Kalia (Architect I, Engineer)
