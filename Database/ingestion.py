@@ -48,7 +48,7 @@ if __name__ == "__main__":
                 }
                 heart_rate_counter = 0
                 max_user_heart_rate = 0
-                notification_sent = False
+                notification_sent = True
 
             # new user found block
             elif 'user_id' in message:
