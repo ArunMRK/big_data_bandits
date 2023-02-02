@@ -167,20 +167,6 @@ app.layout = \
                 ], style={"display": "inline-block", 'width': '20%'}),
         ]),
 
-        # # Aggregations summary div
-        # html.Div([
-        #     html.Div([
-        #         # Average out put aggregation text
-        #         html.Div(id='avg-power-output-agg-id',
-        #                  style={'text-align': 'center', 'font-size': '20px'})
-        #     ], style={"display": "inline-block", 'width': '50%'}),
-        #     html.Div([
-        #         # Total power output
-        #         html.Div(id='total-power-output-agg-id',
-        #                  style={'text-align': 'center', 'font-size': '20px'})
-        #     ], style={"display": "inline-block", 'width': '50%'}),
-        # ], style={'padding-top': '20px'}),
-
         # Graphs by gender div
         html.Div([
             html.Div([
@@ -204,58 +190,52 @@ app.layout = \
     ], style={'padding-left': '20px', 'padding-right': '20px', 'padding-top': '20px'})
 
 # update name
-
-
 @app.callback(
     Output(component_id='name-id', component_property='children'),
     Input('user-interval-component', 'n_intervals'),
 )
 def update_name_div(n):
-
+    # TODO: link the name to the actual current data
     name = 'Ben Douglas-Griffiths'
     return f'{name}'
 
-# update name
-
-
+# update age
 @app.callback(
     Output(component_id='age-id', component_property='children'),
     Input('user-interval-component', 'n_intervals'),
 )
 def update_age_div(n):
+     # TODO: link the age to the actual current data
     age = '24'
     return f'{age} years old'
 
 # update gender
-
-
 @app.callback(
     Output(component_id='gender-id', component_property='children'),
     Input('user-interval-component', 'n_intervals'),
 )
 def update_gender_div(n):
+     # TODO: link the gender to the actual current data
     gender = 'Male'
     return f'{gender}'
 
 # update weight
-
-
 @app.callback(
     Output(component_id='weight-id', component_property='children'),
     Input('user-interval-component', 'n_intervals'),
 )
 def update_weight_div(n):
+     # TODO: link the weight to the actual current data
     weight = '80'
     return f'{weight}KG'
 
 # update Height
-
-
 @app.callback(
     Output(component_id='height-id', component_property='children'),
     Input('user-interval-component', 'n_intervals'),
 )
 def update_height_div(n):
+     # TODO: link the height to the actual current data
     height = '1.8'
     return f'{height}m'
 
@@ -268,17 +248,17 @@ def update_height_div(n):
     Input('user-interval-component', 'n_intervals'),
 )
 def update_duration_div(n):
+     # TODO: link the duration to the actual current data
     duration = '240'
     return f'{duration} seconds'
 
 # update duration
-
-
 @app.callback(
     Output(component_id='bpm-id', component_property='children'),
     Input('user-interval-component', 'n_intervals'),
 )
 def update_bpm_div(n):
+     # TODO: link the bpm to the actual current data
     bpm = '92'
     return f'{bpm} BPM'
 
@@ -300,20 +280,21 @@ def update_bpm_div_color(n):
     Input('user-interval-component', 'n_intervals'),
 )
 def update_power_div(n):
+     # TODO: link the total_power to the actual current data
     total_power = '900'
     return f'{total_power} W'
+
 
 # User stats updated by the choice of tab
 
 # update user power
-
-
 @app.callback(
     Output(component_id='user-power-id', component_property='children'),
     [Input('tabs-current-max', 'value'),
      Input('user-interval-component', 'n_intervals')]
 )
 def update_bpm_div(tab, n):
+    # TODO: link the max_power / current_power to the data from actual current user
     if tab == 'tab-current':
         user_power = '30'
         return f'{user_power} W'
@@ -321,14 +302,13 @@ def update_bpm_div(tab, n):
     return f'{user_power} W'
 
 # update user RPM
-
-
 @app.callback(
     Output(component_id='rpm-id', component_property='children'),
     [Input('tabs-current-max', 'value'),
      Input('user-interval-component', 'n_intervals')]
 )
 def update_rpm_div(tab, n):
+    # TODO: link the max_rpm / current_rpm to the data from actual current user
     if tab == 'tab-current':
         rpm = '30'
         return f'{rpm} RPM'
@@ -336,14 +316,13 @@ def update_rpm_div(tab, n):
     return f'{rpm} RPM'
 
 # update user resistance
-
-
 @app.callback(
     Output(component_id='user-resistance-id', component_property='children'),
     [Input('tabs-current-max', 'value'),
      Input('user-interval-component', 'n_intervals')]
 )
 def update_rpm_div(tab, n):
+    # TODO: link the max_resistance / current_resistance to the data from actual current user
     if tab == 'tab-current':
         resistance = '30'
         return f'{resistance}'
@@ -359,19 +338,19 @@ def update_rpm_div(tab, n):
            component_property='children'),
     Input('rides-interval-component', 'n_intervals'),
 )
-def update_rpm_div(n):
+def update_avg_power_output_div(n):
+    # TODO: link the average power output to the data from DATA WAREHOUSE
     average_power_output = '30'
     return f'Average Power output: {average_power_output} W'
 
 # total power aggregate
-
-
 @app.callback(
     Output(component_id='total-power-output-agg-id',
            component_property='children'),
     Input('rides-interval-component', 'n_intervals')
 )
 def update_rpm_div(n):
+    # TODO: link the total power out putto the data from DATA WAREHOUSE
     total_power_output = '200'
     return f'Total Power output: {total_power_output} W'
 
@@ -393,8 +372,6 @@ def update_rpm_div(tab, n):
     return
 
 # avg number of of rides split by gender
-
-
 @app.callback(
     Output(component_id='num-rides-graph-id', component_property='figure'),
     [Input('tabs-graphs', 'value'),
@@ -408,8 +385,6 @@ def update_rpm_div(tab, n):
     return
 
 # avg number of of rides split by gender
-
-
 @app.callback(
     Output(component_id='age-aggregation-graph-id',
            component_property='figure'),
@@ -424,17 +399,3 @@ def update_rpm_div(n):
 if __name__ == "__main__":
     app.run_server(host="0.0.0.0", debug=True, port=8080)
 
-  # html.Div(children=[
-    #     html.H1('DELOTON'),
-    #     html.Div(
-    #         [
-    #             html.Div(
-    #                 dcc.Link(
-    #                     f"{page['name']} - {page['path']}", href=page["relative_path"]
-    #                 )
-    #             )
-    #             for page in dash.page_registry.values()
-    #         ]
-    #     ),
-    #     dash.page_container
-    # ])
