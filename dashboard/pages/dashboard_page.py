@@ -2,7 +2,7 @@ from dash import Dash, dcc, html, Output, Input, callback
 import plotly.express as px
 import pandas as pd
 import dash
-
+app = Dash(__name__)
 dash.register_page(__name__)
 layout = \
     html.Div([
@@ -28,6 +28,7 @@ layout = \
         html.Div([
             html.Div([
                 # name
+                html.Div(id='name-id'),
             ], style={"display": "inline-block", 'width': '30%'}),
             html.Div([
                 # age
@@ -74,7 +75,6 @@ layout = \
             html.Div([
                 # current/max switch
             ], style={"display": "inline-block", 'width': '33%'}),
-
         ]),
 
         # Ride details Title div
@@ -130,3 +130,9 @@ layout = \
 
 # OUTPUTS for ids:
 
+@app.callback(
+    Output(component_id='name-id', component_property='children'),
+    
+)
+def update_output_div():
+    return f'Ben Douglas-Griffiths'
