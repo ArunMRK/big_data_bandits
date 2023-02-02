@@ -4,6 +4,7 @@ import ast
 from statistics import mean
 from datetime import date
 
+
 def split_name(name: str) -> list:
     """Split fullname into a first and second name. Returns a list where the first element is the first name and the second element is the last name
     """
@@ -20,7 +21,8 @@ def split_name(name: str) -> list:
 
 
 def unix_to_date(timestamp: int) -> datetime.date:
-    """Take in unix timestamp (in ms, so have to divide by 1,000 to get seconds) and return date"""
+    """Take in unix timestamp (in ms, so have to divide by 1,000 to get seconds) and return date
+    """
     timestamp /= 1000
     time_and_date = datetime.datetime.fromtimestamp(
         timestamp)
@@ -56,7 +58,6 @@ def extract_date(message: str) -> datetime.time:
     regex = "[0-9]{4}(-[0-9]{2}){2}"
     result = re.search(regex, message).group(0)
     date = datetime.datetime.strptime(result, '%Y-%m-%d').date()
-    print(date)
     return date
 
 
@@ -65,7 +66,6 @@ def extract_date_time(message: str) -> datetime.time:
     regex = "[0-9]{4}(-[0-9]{2}){2} [0-9]{2}:[0-9]{2}:[0-9]{2}"
     result = re.search(regex, message).group(0)
     date = datetime.datetime.strptime(result, '%Y-%m-%d %H:%M:%S')
-    print(type(date))
     return date
 
 
@@ -76,10 +76,11 @@ def extract_ride_duration_resistance_data(message: str) -> dict:
     data = ast.literal_eval(test)["log"].split("[INFO]: ")[-1]
     data_array = data.strip().split(";")
     date_time = extract_date_time(message)
+
     message_dict = {words[val.split("= ")[0].strip()]: val.split(
         "= ")[-1] for val in data_array}
-    ride_dict = {'duration': message_dict['duration'],
-                 'resistance': message_dict['resistance'], 'date_time': date_time}
+    ride_dict = {"duration": message_dict["duration"],
+                 "resistance": message_dict["resistance"], "date_time": date_time}
 
     return ride_dict
 
@@ -92,42 +93,43 @@ def extract_ride_hrt_rpm_power(message: str) -> dict:
     message_dict = {words[val.split("= ")[0].strip()]: val.split(
         "= ")[-1] for val in message_arr}
 
-    ride_dict = {'heart_rate': message_dict['heart_rate'],
-                 'rpm': message_dict['rpm'], 'power': message_dict['power']}
+    ride_dict = {"heart_rate": message_dict["heart_rate"],
+                 "rpm": message_dict["rpm"], "power": message_dict["power"]}
 
     return ride_dict
 
 
-
 def current_ride_averages(current_ride_data: list) -> dict:
-    """Takes in readings over a ride and returns average values for rpm, heart rate, power and resistance over the course of the ride"""
+    """Takes in readings over a ride and returns average values for rpm, heart rate, power and resistance over the course of the ride
+    """
     heart_readings = current_ride_data["heart_rate"]
     power_readings = current_ride_data["power"]
     rpm_readings = current_ride_data["rpm"]
     resistance_readings = current_ride_data["resistance"]
 
     averages_dict = {
-        'avg_rpm': mean(rpm_readings),
-        'avg_heart_rate': mean(heart_readings),
-        'avg_power': mean(power_readings),
-        'avg_resistance': mean(resistance_readings)
+        "avg_rpm": mean(rpm_readings),
+        "avg_heart_rate": mean(heart_readings),
+        "avg_power": mean(power_readings),
+        "avg_resistance": mean(resistance_readings)
     }
 
     return averages_dict
 
 
 def current_ride_maximums(current_ride_data: list) -> dict:
-    """Takes in readings over a ride, and returns max values for rpm, heart rate, power and resistance over the course of the ride"""
+    """Takes in readings over a ride, and returns max values for rpm, heart rate, power and resistance over the course of the ride
+    """
     heart_readings = current_ride_data["heart_rate"]
     power_readings = current_ride_data["power"]
     rpm_readings = current_ride_data["rpm"]
     resistance_readings = current_ride_data["resistance"]
 
     maxima_dict = {
-        'max_rpm': max(heart_readings),
-        'max_heart_rate': max(power_readings),
-        'max_power': max(rpm_readings),
-        'max_resistance': max(resistance_readings)
+        "max_rpm": max(rpm_readings),
+        "max_heart_rate": max(heart_readings),
+        "max_power": max(power_readings),
+        "max_resistance": max(resistance_readings)
     }
 
     return maxima_dict
@@ -141,9 +143,9 @@ def current_ride_timings(current_ride_data: list) -> dict:
 
     total_duration = duration_readings[-1]
     timings_dict = {
-        'started': datetime_readings[0],
-        'finished': datetime_readings[-1],
-        'duration': total_duration
+        "started": datetime_readings[0],
+        "finished": datetime_readings[-1],
+        "duration": total_duration
     }
 
     return timings_dict
@@ -153,8 +155,9 @@ def get_max_heart_rate(age: int) -> int:
     """Determines the maximum working heart rate given the users age. This will be 85% of the maximum allowed heart rate for a given age
     """
     return round((220 - age) * 0.85)
-    
-def age_from_dob(born:datetime.date) -> int:
+
+
+def age_from_dob(born: datetime.date) -> int:
     """Find user's age from DOB"""
     today = date.today()
     return today.year - born.year - ((today.month, today.day) < (born.month, born.day))
