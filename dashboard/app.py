@@ -167,20 +167,6 @@ app.layout = \
                 ], style={"display": "inline-block", 'width': '20%'}),
         ]),
 
-        # # Aggregations summary div
-        # html.Div([
-        #     html.Div([
-        #         # Average out put aggregation text
-        #         html.Div(id='avg-power-output-agg-id',
-        #                  style={'text-align': 'center', 'font-size': '20px'})
-        #     ], style={"display": "inline-block", 'width': '50%'}),
-        #     html.Div([
-        #         # Total power output
-        #         html.Div(id='total-power-output-agg-id',
-        #                  style={'text-align': 'center', 'font-size': '20px'})
-        #     ], style={"display": "inline-block", 'width': '50%'}),
-        # ], style={'padding-top': '20px'}),
-
         # Graphs by gender div
         html.Div([
             html.Div([
