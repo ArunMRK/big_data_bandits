@@ -54,7 +54,7 @@ if __name__ == "__main__":
 
             # new user found block
             elif 'user_id' in message:
-                print(f"{{datetime.datetime.now()}}: New user found in stream...")
+                print(f"{datetime.datetime.now()}: New user found in stream...")
                 found_user = True
                 ride_exists = True
 
@@ -94,7 +94,8 @@ if __name__ == "__main__":
                         try:
                             email_alert(user_alert_data)
                         except:
-                            print("Email unsuccessful")
+                            print(
+                                f"{datetime.datetime.now()}: Email unsuccessful")
                         notification_sent = True
 
                 current_ride_data["heart_rate"].append(heart_rate)
