@@ -61,7 +61,7 @@ def extract_date(message: str) -> datetime.time:
     return date
 
 
-def extract_date_time(message: str) -> datetime.time:
+def extract_date_time(message: str) -> datetime:
     """Extracts the date from the kafka data"""
     regex = "[0-9]{4}(-[0-9]{2}){2} [0-9]{2}:[0-9]{2}:[0-9]{2}"
     result = re.search(regex, message).group(0)

@@ -1,19 +1,21 @@
-import ast
-import base64
-import datetime
-import json
-import time
-import uuid
-import boto3
-import pandas as pd
-import os
-from dotenv import load_dotenv
-from configparser import ConfigParser
-from confluent_kafka import Consumer, KafkaError, TopicPartition, KafkaException, Producer
-from typing import NoReturn
-from sqlwrapper import *
-from utils import *
 from s3_connection import *
+from utils import *
+from sqlwrapper import *
+from typing import NoReturn
+from confluent_kafka import Consumer, KafkaError, TopicPartition, KafkaException, Producer
+from configparser import ConfigParser
+from dotenv import load_dotenv
+import os
+import pandas as pd
+import boto3
+import uuid
+import time
+import json
+import datetime
+import base64
+import sys
+import ast
+from Heart_Rate.heart_rate_script import *
 
 load_dotenv(override=True, verbose=True)
 BOOTSTRAP_SERVERS = os.getenv('BOOTSTRAP_SERVERS')
@@ -90,6 +92,7 @@ if __name__ == "__main__":
     user_id = None
     ride_exists = False
     user_details = None
+    max_heart_rate = 0
     current_ride_data = {
         "datetime": [], "duration": [], "resistance": [], "heart_rate": [],
         "rpm": [], "power": []
@@ -118,6 +121,7 @@ if __name__ == "__main__":
 
                     found_user = False
                     ride_exists = False
+                    max_heart_rate = 0
                     current_ride_data = {
                         "datetime": [], "duration": [], "resistance": [],
                         "heart_rate": [], "rpm": [], "power": []
@@ -132,6 +136,7 @@ if __name__ == "__main__":
                     user_details = extract_user_details(message)
                     user_id = int(user_details["user_id"])
                     user_age = age_from_dob(user_details['dob_date'])
+                    max_heart_rate = get_max_heart_rate(user_age)
                     ride_exists = True
 
                 # (NEW DATA BUT NO CURRENTLY FOUND USER)
@@ -156,8 +161,15 @@ if __name__ == "__main__":
                     elif 'Telemetry - hrt' in message:
                         ride_hrt_rpm_power = extract_ride_hrt_rpm_power(
                             message)
-                        current_ride_data["heart_rate"].append(
-                            int(ride_hrt_rpm_power["heart_rate"]))
+
+                        heart_rate = int(ride_hrt_rpm_power["heart_rate"])
+
+                        if heart_rate > max_heart_rate:
+                            user_alert_data = get_user_details(
+                                user_age, user_details["first"], user_details["second"], heart_rate, max_heart_rate, ride_duration_resistance["date_time"])
+                            email_alert(user_alert_data)
+
+                        current_ride_data["heart_rate"].append(heart_rate)
                         current_ride_data["rpm"].append(
                             int(ride_hrt_rpm_power["rpm"]))
                         current_ride_data["power"].append(
