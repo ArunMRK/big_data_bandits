@@ -50,6 +50,7 @@ def extract_user_details(message: str) -> dict:
                  "email": raw_data["email_address"], "date_created": date_created,
                  "original_source": raw_data["original_source"],
                  "bike_serial": raw_data["bike_serial"]}
+
     return user_dict
 
 
@@ -58,14 +59,16 @@ def extract_date(message: str) -> datetime.time:
     regex = "[0-9]{4}(-[0-9]{2}){2}"
     result = re.search(regex, message).group(0)
     date = datetime.datetime.strptime(result, '%Y-%m-%d').date()
+
     return date
 
 
-def extract_date_time(message: str) -> datetime.time:
+def extract_date_time(message: str) -> datetime.datetime:
     """Extracts the date from the kafka data"""
     regex = "[0-9]{4}(-[0-9]{2}){2} [0-9]{2}:[0-9]{2}:[0-9]{2}"
     result = re.search(regex, message).group(0)
     date = datetime.datetime.strptime(result, '%Y-%m-%d %H:%M:%S')
+
     return date
 
 
@@ -130,10 +133,12 @@ def current_ride_summary(current_ride_data: list) -> dict:
 def get_max_heart_rate(age: int) -> int:
     """Determines the maximum working heart rate given the users age. This will be 85% of the maximum allowed heart rate for a given age
     """
+
     return round((220 - age) * 0.85)
 
 
 def age_from_dob(born: datetime.date) -> int:
     """Find user's age from DOB"""
     today = date.today()
+
     return today.year - born.year - ((today.month, today.day) < (born.month, born.day))
