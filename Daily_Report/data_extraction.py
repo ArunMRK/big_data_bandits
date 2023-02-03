@@ -2,6 +2,7 @@ from sqlwrapper import *
 import datetime
 import pandas as pd
 import numpy as np
+import csv
 import plotly.express as px
 
 conn = get_db_connection()
@@ -59,7 +60,7 @@ def gender_plot(data: dict) -> px.pie:
         }, title=f"Gender Distribution ({LAST_DAY} to {TODAY_FORMATTED})"
     )
 
-    return fig.write_image("Plots/gender_distribution.png")
+    return fig.write_image("Data/gender_distribution.png")
 
 
 def age_from_dob(born: datetime.date) -> int:
@@ -72,7 +73,7 @@ def age_from_dob(born: datetime.date) -> int:
 def age_into_brackets(age: int) -> str:
     """Puts the age into its corresponding bracket - returns the bracket"""
     if age < 18:
-        return "<17"
+        return "<18"
     elif age < 25:
         return "18-24"
     elif age < 35:
@@ -92,7 +93,7 @@ def extract_ages(df: pd.DataFrame) -> list:
     ages = df["dob_date"].apply(age_from_dob)
     # 18-24, 25-34, 35-44, 45-54, 55-64 and 65 and over
     age_brackets = {
-        "<17": 0, "18-24": 0, "25-34": 0, "35-44": 0, "45-54": 0,
+        "<18": 0, "18-24": 0, "25-34": 0, "35-44": 0, "45-54": 0,
         "55-64": 0, "65+": 0
     }
 
@@ -114,7 +115,7 @@ def age_plot(data: dict) -> px.bar:
                  title=f"Age Distribution ({LAST_DAY} to {TODAY_FORMATTED})"
                  )
 
-    return fig.write_image("Plots/age_distribution.png")
+    return fig.write_image("Data/age_distribution.png")
 
 
 def extract_averages(df: pd.DataFrame) -> dict:
@@ -139,19 +140,3 @@ def extract_total(df: pd.DataFrame) -> dict:
     }
 
     return total_data
-
-
-if __name__ == "__main__":
-    rides = extract_last_day_data(LAST_DAY)
-    print(rides.head())
-    num_of_rides = rides.shape[0]
-    print(num_of_rides)
-    users = extract_last_day_users(rides)
-    print(users)
-    ages = extract_ages(users)
-    genders = gender_distribution(users)
-    print(genders)
-    gender_plot(genders)
-    age_plot(ages)
-    print(extract_averages(rides))
-    print(extract_total(rides))
