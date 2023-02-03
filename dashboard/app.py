@@ -10,6 +10,14 @@ import dash_bootstrap_components as dbc
 from utils import *
 from kafka_consumer import *
 
+current_ride_data = {
+                    "datetime":None, "duration": None, "current_resistance": 0,
+                    "current_heart_rate": 0, "current_rpm": 0, "current_power": 0,
+                    "max_resistance": 0,"max_rpm": 0, "max_power": 0,
+                    "total_power": 0
+                }
+
+user_details = None
 
 app = Dash(__name__, external_stylesheets=[
            dbc.themes.COSMO])  # use_pages=True)
@@ -198,8 +206,9 @@ app.layout = \
 )
 def update_name_div(n):
     # TODO: link the name to the actual current data
-    name = 'Ben Douglas-Griffiths'
-    return f'{name}'
+    first = user_details['first']
+    second = user_details['second']
+    return f'{first} {second}'
 
 # update age
 @app.callback(
@@ -208,7 +217,7 @@ def update_name_div(n):
 )
 def update_age_div(n):
      # TODO: link the age to the actual current data
-    age = '24'
+    age = user_age
     return f'{age} years old'
 
 # update gender
@@ -218,7 +227,7 @@ def update_age_div(n):
 )
 def update_gender_div(n):
      # TODO: link the gender to the actual current data
-    gender = 'Male'
+    gender = user_details['gender']
     return f'{gender}'
 
 # update weight
@@ -228,7 +237,7 @@ def update_gender_div(n):
 )
 def update_weight_div(n):
      # TODO: link the weight to the actual current data
-    weight = '80'
+    weight = user_details['weight']
     return f'{weight}KG'
 
 # update Height
@@ -238,7 +247,7 @@ def update_weight_div(n):
 )
 def update_height_div(n):
      # TODO: link the height to the actual current data
-    height = '1.8'
+    height = user_details['height']
     return f'{height}m'
 
 
@@ -251,7 +260,7 @@ def update_height_div(n):
 )
 def update_duration_div(n):
      # TODO: link the duration to the actual current data
-    duration = '240'
+    duration = current_ride_data['duration']
     return f'{duration} seconds'
 
 # update duration
@@ -261,7 +270,7 @@ def update_duration_div(n):
 )
 def update_bpm_div(n):
      # TODO: link the bpm to the actual current data
-    bpm = '92'
+    bpm = current_ride_data['current_heart_rate']
     return f'{bpm} BPM'
 
 @app.callback(
@@ -270,8 +279,7 @@ def update_bpm_div(n):
 )
 def update_bpm_div_color(n):
     #  TODO: CODE FOR checking heart range in healthy range
-    bpm = 89
-    if bpm > 90:
+    if heart_rate >= heart_rate_abnormal:
         return {'text-align': 'center', 'font-weight': 'bold', 'font-size': '20px', 'color':'red'}
     return {'text-align': 'center', 'font-weight': 'bold', 'font-size': '20px', 'color':'green'}
 
@@ -283,7 +291,7 @@ def update_bpm_div_color(n):
 )
 def update_power_div(n):
      # TODO: link the total_power to the actual current data
-    total_power = '900'
+    total_power = current_ride_data['total_power']
     return f'{total_power} W'
 
 
@@ -298,9 +306,9 @@ def update_power_div(n):
 def update_bpm_div(tab, n):
     # TODO: link the max_power / current_power to the data from actual current user
     if tab == 'tab-current':
-        user_power = '30'
+        user_power = current_ride_data['current_power']
         return f'{user_power} W'
-    user_power = '50'
+    user_power = current_ride_data['max_power']
     return f'{user_power} W'
 
 # update user RPM
@@ -312,9 +320,9 @@ def update_bpm_div(tab, n):
 def update_rpm_div(tab, n):
     # TODO: link the max_rpm / current_rpm to the data from actual current user
     if tab == 'tab-current':
-        rpm = '30'
+        rpm = current_ride_data['current_rpm']
         return f'{rpm} RPM'
-    rpm = '60'
+    rpm = current_ride_data['max_rpm']
     return f'{rpm} RPM'
 
 # update user resistance
@@ -326,9 +334,9 @@ def update_rpm_div(tab, n):
 def update_rpm_div(tab, n):
     # TODO: link the max_resistance / current_resistance to the data from actual current user
     if tab == 'tab-current':
-        resistance = '30'
+        resistance = current_ride_data['current_resistance']
         return f'{resistance}'
-    resistance = '50'
+    resistance = current_ride_data['max_resistance']
     return f'{resistance}'
 
 
@@ -399,18 +407,12 @@ def update_rpm_div(n):
 
 """Putting this here for now, to test locally"""
 if __name__ == "__main__":
-    app.run_server(host="0.0.0.0", debug=True, port=8080)
+
+    print('Beginning Kafka script')
 
     found_user = False
     ride_exists = False
     user_id = None
-    user_details = None
-    current_ride_data = {
-                    "datetime":None, "duration": None, "current_resistance": 0,
-                    "current_heart_rate": 0, "current_rpm": 0, "current_power": 0,
-                    "max_resistance": 0,"max_rpm": 0, "max_power": 0,
-                    "total_power": 0
-                }
     heart_rate_abnormal=False
     heart_rate_counter = 0
     max_user_heart_rate = 0
@@ -418,6 +420,7 @@ if __name__ == "__main__":
     while True:
         message = get_kafka_message(c)
         if message:
+            print(message)
             if "Getting user" in message:
                 ''' Resetting variables for new user'''
                 found_user = False
@@ -474,3 +477,5 @@ if __name__ == "__main__":
                     current_ride_data["max_rpm"] = int(ride_duration_resistance["rpm"])
                 if current_ride_data["max_power"] < int(ride_duration_resistance["power"]):
                     current_ride_data["max_power"] = int(ride_duration_resistance["power"])
+                    
+        app.run_server(host="0.0.0.0", debug=True, port=8080)
