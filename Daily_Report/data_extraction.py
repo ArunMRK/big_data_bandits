@@ -42,16 +42,17 @@ def gender_distribution(df: pd.DataFrame) -> dict:
     """Determines the gender distribution of riders for the past 24 hours; returns a dict
     """
     data = dict(df["gender"].value_counts())
-    plot_data = {"gender": list(data.keys()), "count": list(data.values())}
 
-    return plot_data
+    return data
 
 
 def gender_plot(data: dict) -> px.pie:
     """Pie plot of the gender distributions for the riders for the past 24 hours
     """
+    plot_data = {"gender": list(data.keys()), "count": list(data.values())}
+
     fig = px.pie(
-        data, values="count", names="gender",
+        plot_data, values="count", names="gender",
         labels={
             "count": "Count",
             "gender": "Gender"
@@ -61,6 +62,85 @@ def gender_plot(data: dict) -> px.pie:
     return fig.write_image("Plots/gender_distribution.png")
 
 
+def age_from_dob(born: datetime.date) -> int:
+    """Find user's age from DOB"""
+    today = datetime.date.today()
+
+    return today.year - born.year - ((today.month, today.day) < (born.month, born.day))
+
+
+def age_into_brackets(age: int) -> str:
+    """Puts the age into its corresponding bracket - returns the bracket"""
+    if age < 18:
+        return "<17"
+    elif age < 25:
+        return "18-24"
+    elif age < 35:
+        return "25-34"
+    elif age < 45:
+        return "35-44"
+    elif age < 55:
+        return "45-54"
+    elif age < 65:
+        return "55-64"
+    else:
+        return "65+"
+
+
+def extract_ages(df: pd.DataFrame) -> list:
+    """Extracts the ages of users from the past 24 hours and returns a list of all ages"""
+    ages = df["dob_date"].apply(age_from_dob)
+    # 18-24, 25-34, 35-44, 45-54, 55-64 and 65 and over
+    age_brackets = {
+        "<17": 0, "18-24": 0, "25-34": 0, "35-44": 0, "45-54": 0,
+        "55-64": 0, "65+": 0
+    }
+
+    for age in ages:
+        age_brackets[age_into_brackets(age)] += 1
+
+    return age_brackets
+
+
+def age_plot(data: dict) -> px.bar:
+    """Bar chart plot of the age distributions based on the age brackets"""
+    plot_data = {"bracket": list(data.keys()), "count": list(data.values())}
+
+    fig = px.bar(plot_data, x="bracket", y="count",
+                 labels={
+                     "count": "Count",
+                     "bracket": "Age Bracket"
+                 },
+                 title=f"Age Distribution ({LAST_DAY} to {TODAY_FORMATTED})"
+                 )
+
+    return fig.write_image("Plots/age_distribution.png")
+
+
+def extract_averages(df: pd.DataFrame) -> dict:
+    """Extracts the average duration, rpm, power, resistance, heart rate from the last 24 hours of data - returns a dict"""
+    avg_data = {
+        "avg_duration": df["duration"].mean(),
+        "avg_rpm": df["avg_rpm"].mean(),
+        "avg_power": df["avg_power"].mean(),
+        "avg_resistance": df["avg_resistance"].mean(),
+        "avg_heart_rate": df["avg_heart_rate"].mean()
+    }
+
+    return avg_data
+
+
+def extract_total(df: pd.DataFrame) -> dict:
+    """Extracts total duration and power for the past 24 hours - returns a dict
+    """
+    total_data = {
+        "total_duration": df["duration"].sum(),
+        "total_power": df["total_power"].sum()
+    }
+
+    return total_data
+
+
 if __name__ == "__main__":
     rides = extract_last_day_data(LAST_DAY)
     print(rides.head())
@@ -68,6 +148,10 @@ if __name__ == "__main__":
     print(num_of_rides)
     users = extract_last_day_users(rides)
     print(users)
+    ages = extract_ages(users)
     genders = gender_distribution(users)
     print(genders)
     gender_plot(genders)
+    age_plot(ages)
+    print(extract_averages(rides))
+    print(extract_total(rides))
