@@ -21,15 +21,9 @@ def extract_last_day(cut_off: datetime.datetime) -> pd.DataFrame:
     return pd.DataFrame([[row[col] for col in colNames] for row in data], columns=colNames)
 
 
-def extract_num_of_rides(df: pd.DataFrame) -> int:
-    """Extracts the number of rides that occurred in the last 24 hours and returns an int
-    """
-    return df.shape[0]
-
-
-# number of rides that day
 # gender breakdown of riders
 if __name__ == "__main__":
     df = extract_last_day(LAST_DAY)
     print(df.head())
-    num_of_rides = extract_num_of_rides(df)
+    num_of_rides = df.shape[0]
+    print(num_of_rides)
