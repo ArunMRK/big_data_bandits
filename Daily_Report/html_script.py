@@ -7,10 +7,10 @@ TODAY = datetime.datetime.now()
 def gender_list(genders: dict) -> str:
     """Creates a HTML list element that contains the genders and how many riders are of that gender
     """
-    html_code = """<ul style="list-style-type:square;"> <h2>Genders</h2>"""
+    html_code = """<ul> <h2>Genders</h2>"""
 
     for gender in genders.keys():
-        html_code += f"<li>{gender[0].upper() + gender[1:]}: {genders[gender]}</li>"
+        html_code += f"{gender[0].upper() + gender[1:]}: <b>{genders[gender]}</b> <br>"
     html_code += "</li>"
 
     return html_code
@@ -27,41 +27,54 @@ def make_html_report(
     </head>
     <h1 style="text-align: center;">Deloton Daily Report for {TODAY.year}-{TODAY.month}-{TODAY.day}</h1>
     <hr>
+    <div style="display: flex;">
+        <div style="flex: 25%; text-align: center; padding: 5px;">
+            <ul>
+                <h2>Total Values</h2>
+                Total Rides: <b>{num_of_rides}</b> <br>
+                Total Duration:<b>{round(totals["total_duration"])} s</b> <br>
+                Total Power: <b>{round(totals["total_power"], 2)}</b> <br>
+            </ul>
+        </div>
+
+        <div style="flex: 25%; text-align: center; padding: 5px;">
+            <ul>
+                <h2>Average Values</h2>
+                Average Duration: <b>{round(averages["avg_duration"], 2)} s</b> <br>
+                Average RPM: <b>{round(averages["avg_rpm"], 2)}</b> <br>
+                Average Power: <b>{round(averages["avg_power"], 2)}</b> <br>
+                Average Resistance: <b>{round(averages["avg_resistance"], 2)}</b> <br>
+                Average Heart Rate: <b>{round(averages["avg_heart_rate"], 2)} bpm</b> <br>
+            </ul>
+        </div>
+
+        <div style="flex: 25%; text-align: center; padding: 5px;">
+            <ul>
+                <h2>Ages</h2>
+                <18: <b>{ages["<18"]}</b> <br>
+                18-24: <b>{ages["18-24"]}</b> <br>
+                25-34: <b>{ages["25-34"]}</b> <br>
+                35-44: <b>{ages["35-44"]}</b> <br>
+                45-54: <b>{ages["45-54"]}</b> <br>
+                55-64: <b>{ages["55-64"]}</b> <br>
+                65+: <b>{ages["65+"]}</b> <br>
+            </ul>
+        </div>
+
+        <div style="flex: 25%; text-align: center; padding: 5px;">
+            {gender_list(genders)}
+        </div>
+    </div>
 
     <div style="display: flex;">
-        <body>
-                <ul style="list-style-type:square;">
-                    <h2>Total Values</h2>
-                    <li>Total Rides: {num_of_rides}</li>
-                    <li>Total Duration: {round(totals["total_duration"])} s</li>
-                    <li>Total Power: {round(totals["total_power"], 2)}</li>
-                </ul>
-            <ul style="list-style-type:square;">
-                <h2>Average Values</h2>   
-                <li>Average Duration: {round(averages["avg_duration"], 2)} s</li>
-                <li>Average RPM: {round(averages["avg_rpm"], 2)}</li>
-                <li>Average Power: {round(averages["avg_power"], 2)}</li>
-                <li>Average Resistance: {round(averages["avg_resistance"], 2)}</li>
-                <li>Average Heart Rate: {round(averages["avg_heart_rate"], 2)} bpm</li>
-            </ul>
-            
-            <ul style="list-style-type:square;">
-                <h2>Ages</h2>
-                <li><18: {ages["<18"]}</li>
-                <li>18-24: {ages["18-24"]}</li>
-                <li>25-34: {ages["25-34"]}</li>
-                <li>35-44: {ages["35-44"]}</li>
-                <li>45-54: {ages["45-54"]}</li>
-                <li>55-64: {ages["55-64"]}</li>
-                <li>65+: {ages["65+"]}</li>
-            </ul>
-            {gender_list(genders)}
-        </body>
-    </div>
-        <div style="display: table-row">
-            <img src="Data/age_distribution.png" alt="age_distribution" />
-            <img src="Data/gender_distribution.png" alt="gender_distribution" />
+        <div style="flex: 50%; text-align: center; padding: 5px;">
+            <img src="Data/gender_distribution.jpg" width=450px height=325px alt="gender_distribution">
         </div>
+        <div style="flex: 50%; text-align: center; padding: 5px;">
+            <img src="Data/age_distribution.jpg" width=450px height=325px alt="age_distribution">
+        </div>
+    </div>
+    
     </html>
     """
 
