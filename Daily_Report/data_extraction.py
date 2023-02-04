@@ -60,7 +60,7 @@ def gender_plot(data: dict) -> px.pie:
         }, title=f"Gender Distribution ({LAST_DAY} to {TODAY_FORMATTED})"
     )
 
-    return fig.write_image("Data/gender_distribution.png")
+    return fig.write_image("Data/gender_distribution.jpg")
 
 
 def age_from_dob(born: datetime.date) -> int:
@@ -115,7 +115,7 @@ def age_plot(data: dict) -> px.bar:
                  title=f"Age Distribution ({LAST_DAY} to {TODAY_FORMATTED})"
                  )
 
-    return fig.write_image("Data/age_distribution.png")
+    return fig.write_image("Data/age_distribution.jpg")
 
 
 def extract_averages(df: pd.DataFrame) -> dict:
