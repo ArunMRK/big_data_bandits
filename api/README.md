@@ -6,8 +6,8 @@ pip install python-dotenv
 source ./venv/bin/activate
 
 -flask setup:
-FLASK_APP=app.py
-FLASK_DEBUG=1
+export FLASK_APP=app.py
+export FLASK_DEBUG=1
 
 -run flask:
 flask run
