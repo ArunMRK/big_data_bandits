@@ -48,7 +48,7 @@ def extract_user_details(message: str) -> dict:
                  "second": name[1].replace("'", "''"), "address": address.replace("'", "''"), "postcode": postcode,
                  "dob_date": dob_date, "height": raw_data["height_cm"],
                  "weight": raw_data["weight_kg"], "gender": raw_data["gender"],
-                 "email": raw_data["email_address"], "date_created": date_created,
+                 "email": raw_data["email_address"].replace("'", "''"), "date_created": date_created,
                  "original_source": raw_data["original_source"].replace("'", "''"),
                  "bike_serial": raw_data["bike_serial"]}
 
