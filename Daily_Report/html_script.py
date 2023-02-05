@@ -65,18 +65,8 @@ def make_html_report(
             {gender_list(genders)}
         </div>
     </div>
-
-    <div style="display: flex;">
-        <div style="flex: 50%; text-align: center; padding: 5px;">
-            <img src="Data/gender_distribution.jpg" width=450px height=325px alt="gender_distribution">
-        </div>
-        <div style="flex: 50%; text-align: center; padding: 5px;">
-            <img src="Data/age_distribution.jpg" width=450px height=325px alt="age_distribution">
-        </div>
-    </div>
-    
     </html>
     """
 
-    with open("report.html", "w") as f:
+    with open(f"/tmp/report.html", "w") as f:
         f.write(html)
