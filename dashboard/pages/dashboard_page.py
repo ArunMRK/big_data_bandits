@@ -132,7 +132,7 @@ layout = \
 
 @app.callback(
     Output(component_id='name-id', component_property='children'),
-    
+
 )
 def update_output_div():
     return f'Ben Douglas-Griffiths'

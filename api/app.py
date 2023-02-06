@@ -1,14 +1,13 @@
 import psycopg2
 import psycopg2.extras
 from flask import Flask, current_app, jsonify, request
-from flask_cors import CORS
+# from flask_cors import CORS
 from datetime import datetime
 from sqlwrapper import *
 from datetime import datetime, timedelta
 
 # Set up
 app = Flask(__name__)
-CORS(app, origins=["http://127.0.0.1:5000"],  supports_credentials=True)
 conn = get_db_connection()
 ERROR_400 = 400
 ACCEPTED_200 = 200
