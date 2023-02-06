@@ -62,6 +62,15 @@ if __name__ == "__main__":
                 user_id = int(user_details["user_id"])
                 user_age = age_from_dob(user_details["dob_date"])
                 max_heart_rate = get_max_heart_rate(user_age)
+                user_s3_details = {
+                    "name": user_details["first"] + " " + user_details["second"],
+                    "gender": user_details["gender"],
+                    "age": user_age,
+                    "height": user_details["height"],
+                    "weight": user_details["weight"],
+                    "max_hrt": max_heart_rate
+                }
+                dump_user_data_to_s3(user_s3_details)
 
             # get first part of data if user exists
             elif found_user and ("Ride - duration" in message):
