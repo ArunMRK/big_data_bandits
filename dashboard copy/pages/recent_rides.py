@@ -56,11 +56,11 @@ layout = html.Div([
     html.Div([
         # age aggregation graph div
         html.Div(id="age",
-                    style={"text-align": "center", "font-size": "30px"})
+                    style={"text-align": "center", "font-size": "30px", "padding-left": "100px", "padding-right": "100px"})
     ]),
     dcc.Interval(
         id="interval-component",
-        interval=1 * 1000,
+        interval=60 * 1000,
         n_intervals=0
     )
 ], style={"padding-left": "20px", "padding-right": "20px", "padding-top": "20px"})

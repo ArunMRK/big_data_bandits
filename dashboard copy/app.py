@@ -27,6 +27,7 @@ def update_timestamp(interval) -> list:
     TODAY_FORMATTED = datetime.datetime(TODAY.year, TODAY.month,
                                         TODAY.day, TODAY.hour, TODAY.minute, TODAY.second)
     LAST_DAY = TODAY_FORMATTED - datetime.timedelta(hours=12)
+
     return [html.Span(f"Last updated: {TODAY_FORMATTED}")]
 
 
@@ -76,7 +77,7 @@ def update_rides_per_gender(interval) -> list:
     rides_per_gender_fig = rides_per_gender_plot(
         gender_rider_dist, LAST_DAY, TODAY_FORMATTED)
 
-    return [dcc.Graph(figure=rides_per_gender_fig)]
+    return [dcc.Graph(figure=rides_per_gender_fig, style={'height': '50vh'})]
 
 
 @app.callback(
@@ -93,7 +94,7 @@ def update_duration_per_gender(interval) -> list:
     duration_per_gender_fig = duration_per_gender_plot(
         gender_duration_dist, LAST_DAY, TODAY_FORMATTED)
 
-    return [dcc.Graph(figure=duration_per_gender_fig)]
+    return [dcc.Graph(figure=duration_per_gender_fig, style={'height': '50vh'})]
 
 
 @app.callback(
@@ -110,7 +111,7 @@ def update_ages(interval) -> list:
     age_dist = extract_ages(dob_per_ride_dist)
     age_fig = age_plot(age_dist, LAST_DAY, TODAY_FORMATTED)
 
-    return [dcc.Graph(figure=age_fig)]
+    return [dcc.Graph(figure=age_fig, style={'height': '50vh'})]
 
 
 if __name__ == "__main__":
