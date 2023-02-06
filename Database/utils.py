@@ -3,6 +3,9 @@ import datetime
 import ast
 from statistics import mean
 from datetime import date
+from typing import NoReturn
+import json
+import boto3
 
 
 def split_name(name: str) -> list:
@@ -143,3 +146,12 @@ def age_from_dob(born: datetime.date) -> int:
     today = date.today()
 
     return today.year - born.year - ((today.month, today.day) < (born.month, born.day))
+
+
+def dump_user_data_to_s3(user_data: dict) -> NoReturn:
+    """Dumps the current user details to an S3 bucket - this includes the name, gender, age, height, weight and maximum allowed heart rate
+    """
+    s3 = boto3.resource("s3")
+    json_user_data = json.dumps(user_data)
+    object = s3.Object("big-data-bandits", "current-user/user-data.json")
+    object.put(Body=json_user_data)
