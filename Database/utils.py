@@ -155,5 +155,3 @@ def dump_user_data_to_s3(user_data: dict) -> NoReturn:
     json_user_data = json.dumps(user_data)
     object = s3.Object("big-data-bandits", "current-user/user-data.json")
     object.put(Body=json_user_data)
-
-    return json_user_data
