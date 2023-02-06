@@ -8,12 +8,6 @@ import datetime
 from typing import NoReturn
 from dash import Dash, dcc, html, Output, Input, callback
 
-TODAY = datetime.datetime.now()
-TODAY_FORMATTED = datetime.datetime(TODAY.year, TODAY.month,
-                                    TODAY.day, TODAY.hour, TODAY.minute, TODAY.second)
-LAST_DAY = TODAY_FORMATTED - datetime.timedelta(hours=12)
-
-app = Dash(__name__)
 load_dotenv(override=True, verbose=True)
 
 # Getting Data from Aurora RDBS AWS source
@@ -59,7 +53,6 @@ conn = get_db_connection()
 def gender_rider_count(cut_off: datetime.datetime) -> pd.DataFrame:
     """Determines the unique riders and extracts all information about them into a Dataframe
     """
-
     sql = f"""SELECT DISTINCT user_details.gender, COUNT(*) FROM user_details 
     JOIN ride_details ON ride_details.user_id = user_details.user_id WHERE ride_details.started > '{cut_off}' GROUP BY user_details.gender;"""
     data = query_executer(conn, sql)
@@ -70,7 +63,7 @@ def gender_rider_count(cut_off: datetime.datetime) -> pd.DataFrame:
     return gender_rides
 
 
-def rides_per_gender_plot(data: pd.DataFrame) -> px.pie:
+def rides_per_gender_plot(data: pd.DataFrame, cut_off, time_now) -> px.pie:
     """Pie plot of the gender distributions for the riders for the past 24 hours
     """
     plot_data = {"gender": list(data["gender"]), "count": list(data["count"])}
@@ -80,7 +73,7 @@ def rides_per_gender_plot(data: pd.DataFrame) -> px.pie:
         labels={
             "count": "Count",
             "gender": "Gender"
-        }, title=f"Number of Rides per Gender ({LAST_DAY} to {TODAY_FORMATTED})"
+        }, title=f"Number of Rides per Gender ({cut_off} to {time_now})"
     )
 
     return fig
@@ -99,7 +92,7 @@ def gender_duration_count(cut_off: datetime.datetime) -> pd.DataFrame:
     return gender_duration
 
 
-def duration_per_gender_plot(data: pd.DataFrame) -> px.bar:
+def duration_per_gender_plot(data: pd.DataFrame, cut_off, time_now) -> px.bar:
     """Bar plot of the gender distributions for the riders for the past 24 hours
     """
     plot_data = {"gender": list(data["gender"]),
@@ -110,7 +103,7 @@ def duration_per_gender_plot(data: pd.DataFrame) -> px.bar:
                      "gender": "Gender",
                      "total_duration": "Total Duration (s)"
                  },
-                 title=f"Total Duration per Gender ({LAST_DAY} to {TODAY_FORMATTED})"
+                 title=f"Total Duration per Gender ({cut_off} to {time_now})"
                  )
 
     return fig
@@ -167,7 +160,7 @@ def extract_ages(df: pd.DataFrame) -> list:
     return age_brackets
 
 
-def age_plot(data: dict) -> px.bar:
+def age_plot(data: dict, cut_off, time_now) -> px.bar:
     """Bar chart plot of the age distributions based on the age brackets"""
     plot_data = {"bracket": list(data.keys()), "count": list(data.values())}
 
@@ -176,25 +169,25 @@ def age_plot(data: dict) -> px.bar:
                      "count": "Count",
                      "bracket": "Age Bracket"
                  },
-                 title=f"Age Distribution ({LAST_DAY} to {TODAY_FORMATTED})"
+                 title=f"Age Distribution ({cut_off} to {time_now})"
                  )
 
     return fig
 
 
-def total_power_output(cut_off: datetime.datetime) -> float:
-    """Extracts the total power of all rides in the past 12 hours and rounds it to 2 decimal places
+def mean_power_output(cut_off) -> float:
+    """Extracts the mean total power of all rides in the past 12 hours and rounds it to 2 decimal places
     """
-    sql = f"""SELECT SUM(total_power) FROM ride_details WHERE ride_details.started > '{cut_off}';"""
+    sql = f"""SELECT AVG(total_power) FROM ride_details WHERE ride_details.started > '{cut_off}';"""
     data = query_executer(conn, sql)
 
     return round(list(data[0].values())[0], 2)
 
 
-def mean_power_output(cut_off: datetime.datetime) -> float:
-    """Extracts the mean total power of all rides in the past 12 hours and rounds it to 2 decimal places
+def total_power_output(cut_off) -> float:
+    """Extracts the total power of all rides in the past 12 hours and rounds it to 2 decimal places
     """
-    sql = f"""SELECT AVG(total_power) FROM ride_details WHERE ride_details.started > '{cut_off}';"""
+    sql = f"""SELECT SUM(total_power) FROM ride_details WHERE ride_details.started > '{cut_off}';"""
     data = query_executer(conn, sql)
 
     return round(list(data[0].values())[0], 2)
