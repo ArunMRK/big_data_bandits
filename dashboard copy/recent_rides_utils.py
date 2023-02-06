@@ -75,6 +75,11 @@ def rides_per_gender_plot(data: pd.DataFrame, cut_off, time_now) -> px.pie:
             "gender": "Gender"
         }, title=f"Number of Rides per Gender ({cut_off} to {time_now})"
     )
+    fig.update_layout(
+        font=dict(
+            size=18
+        )
+    )
 
     return fig
 
@@ -105,6 +110,11 @@ def duration_per_gender_plot(data: pd.DataFrame, cut_off, time_now) -> px.bar:
                  },
                  title=f"Total Duration per Gender ({cut_off} to {time_now})"
                  )
+    fig.update_layout(
+        font=dict(
+            size=18
+        )
+    )
 
     return fig
 
@@ -171,6 +181,11 @@ def age_plot(data: dict, cut_off, time_now) -> px.bar:
                  },
                  title=f"Age Distribution ({cut_off} to {time_now})"
                  )
+    fig.update_layout(
+        font=dict(
+            size=18
+        )
+    )
 
     return fig
 
