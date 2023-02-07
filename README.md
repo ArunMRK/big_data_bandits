@@ -9,7 +9,7 @@ The incoming data was unstructured and dirty meaning that it had to be cleaned s
 The data warehouse ingestion script is hosted on AWS EC2 and runs persistently.
 
 ## Heart Rate Alerts
-- The aim of this deliverable was to send an email (AWS SES) once a users heart rate went outside of their maximum allowed working heart rate, calculated using (220 - age) * 0.85.
+- The aim of this deliverable was to send an email (AWS SES) once a users heart rate went outside of their maximum allowed working heart rate, calculated using (220 - age).
 - Whenever a new user is spotted in the stream, their maximum allowed heart rate is calculated and used to compare against their current heart rate.
 - If the users heart rate exceeds the maximum allowed heart rate 5 consecutive times, then an email is sent, within 15 seconds, to alert that their heart rate has exceeded the allowed limit.
 - We implemented a trigger that only allows one email to be sent per ride, with the aim of reducing spam.
