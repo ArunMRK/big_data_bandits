@@ -2,8 +2,6 @@ from typing import NoReturn
 from data_extraction import *
 from html_script import make_html_report
 import boto3
-from email import encoders
-from email.mime.base import MIMEBase
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -27,12 +25,12 @@ def send_email_with_attachment() -> NoReturn:
     """Creates the email that will be send to the recipient - contains code that allows for attaching files (in this case, it attaches the daily report along with 2 figures)
     """
     msg = MIMEMultipart()
-    msg["Subject"] = "Deloton Daily Report"
+    msg["Subject"] = f"Deloton Daily Report {TODAY.date()}"
     msg["From"] = "big.data.bandits@gmail.com"
-    msg["To"] = "big.data.bandits@gmail.com"
+    msg["To"] = "bicycle-ceo@sigmalabs.co.uk"
 
     body = MIMEText(
-        "Hello, please find attached the daily report and figures for the past 24 hours. All previous reports can be viewed at the following S3 URI: s3://big-data-bandits/daily-reports/", "plain")
+        f"To whom it may concern, \n\nPlease find attached the daily report and figures for {LAST_DAY.date()} to {TODAY.date()}. \nAll previous reports can be viewed at the following S3 URI: s3://big-data-bandits/daily-reports/ \n\nRegards,\nBig Data Bandits", "plain")
     msg.attach(body)
 
     # email attachments
@@ -59,8 +57,8 @@ def send_email_with_attachment() -> NoReturn:
 
     ses_client = boto3.client("ses", region_name="eu-west-2")
     ses_client.send_raw_email(
-        Source="big.data.bandits@gmail.com",
-        Destinations=["big.data.bandits@gmail.com"],
+        Source=msg["From"],
+        Destinations=[msg["To"]],
         RawMessage={"Data": msg.as_string()}
     )
 
