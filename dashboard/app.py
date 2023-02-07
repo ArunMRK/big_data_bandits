@@ -1,481 +1,200 @@
 from dash import Dash, dcc, html, Output, Input
-import plotly.express as px
-import pandas as pd
-import psycopg2
-import psycopg2.extras
-import os
-from dotenv import load_dotenv
 import dash
 import dash_bootstrap_components as dbc
-from utils import *
+import datetime
+from recent_rides_utils import *
+import json
+import boto3
 from kafka_consumer import *
-
-current_ride_data = {
-                    "datetime":None, "duration": None, "current_resistance": 0,
-                    "current_heart_rate": 0, "current_rpm": 0, "current_power": 0,
-                    "max_resistance": 0,"max_rpm": 0, "max_power": 0,
-                    "total_power": 0
-                }
-
-user_details = None
+from current_ride_utils import *
+from read_in_from_kafka import *
+import math
 
 app = Dash(__name__, external_stylesheets=[
-           dbc.themes.COSMO])  # use_pages=True)
+           dbc.themes.ZEPHYR], use_pages=True)
+app.layout = html.Div(dash.page_container)
 
-app.layout = \
-    html.Div([
-        # Interval timers for updating graphs
-        dcc.Interval(
-             id='user-interval-component',
-             interval=60*1000,
-             n_intervals=0
-             ),
-        dcc.Interval(
-            id='rides-interval-component',
-            interval=60*15*1000,
-            n_intervals=0
-        ),
+conn = get_db_connection()
 
-        # Title / top div
-        html.Div([
-            # title wrapper div
-            html.Div([
-                html.H2(children='Current Rider: ')
-            ], style={"display": "inline-block", 'width': '20%'}),
-            # div for last updated text
-            html.Div([
-                html.Div([
-                    # last updated text ('last updated 30 seconds ago..')
-                    html.H1(id='name-id')
-                ]),
-                # html.Div([
-                #     # white space (lifts above div higher)
-                # ]),
-            ], style={"display": "inline-block", 'width': '70%'}),
-        ]),
-        html.Div([
-            html.Hr()
-        ]),
-
-        # User details div
-        html.Div([
-            html.Div([
-                # age
-                html.Div(
-                    id='age-id', style={'text-align': 'center', 'font-size': '20px'}),
-            ], style={"display": "inline-block", 'width': '25%'}),
-            html.Div([
-                # gender
-                html.Div(id='gender-id',
-                         style={'text-align': 'center', 'font-size': '20px'}),
-            ], style={"display": "inline-block", 'width': '25%'}),
-            html.Div([
-                # weight
-                html.Div(id='weight-id',
-                         style={'text-align': 'center', 'font-size': '20px'}),
-            ], style={"display": "inline-block", 'width': '25%'}),
-            html.Div([
-                # height
-                html.Div(id='height-id',
-                         style={'text-align': 'center', 'font-size': '20px'}),
-            ], style={"display": "inline-block", 'width': '25%'}),
-        ]),
-
-        # Horizontal row
-        html.Div([
-            html.Hr()
-        ]),
-
-        # User stats div
-        html.Div([
-            # Wrapper
-            html.Div([
-                html.H2('Users Stats:', style={'text-align': 'top'}),
-                html.Div([
-                    # Duration
-                    html.Div(
-                        id='duration-id', style={'text-align': 'center', 'font-size': '20px'}),
-                ], style={"display": "inline-block", 'width': '33%', 'justify': 'center'}),
-                html.Div([
-                    # BPM
-                    html.Div(
-                        id='bpm-id', style={'text-align': 'center', 'font-weight': 'bold', 'font-size': '20px'}),
-                ], style={"display": "inline-block", 'width': '33%'}),
-                html.Div([
-                    # Total Power
-                    html.Div(id='user-total-power-id',
-                             style={'text-align': 'center', 'font-size': '20px'}),
-                ], style={"display": "inline-block", 'width': '33%'}),
-            ], style={"display": "inline-block", 'width': '50%'}),
-
-            # Wrapper for max / current
-            html.Div([
-
-                dcc.Tabs(id="tabs-current-max", value='tab-current',
-                         children=[
-                             dcc.Tab(label='Current', value='tab-current'),
-                             dcc.Tab(label='Max', value='tab-max'),
-                         ]
-                         ),
-                html.Div([
-                    html.Div([
-                        # current/max RPM
-                        html.Div(
-                            id='rpm-id', style={'text-align': 'center', 'font-size': '20px'}),
-                    ], style={"display": "inline-block", 'width': '33%'}),
-                    html.Div([
-                        # current/max Power
-                        html.Div(
-                            id='user-power-id', style={'text-align': 'center', 'font-size': '20px'}),
-                    ], style={"display": "inline-block", 'width': '33%'}),
-                    html.Div([
-                        # current/max Resistance
-                        html.Div(
-                            id='user-resistance-id', style={'text-align': 'center', 'font-size': '20px'}),
-                    ], style={"display": "inline-block", 'width': '33%'}),
-                ], style={'padding-top': '20px'}),
-            ], style={"display": "inline-block", 'width': '50%'}),
-        ], style={'padding-top': '5px'}),
-
-        # Horizontal row
-        html.Div([
-            html.Hr()
-        ]),
-
-        # Ride details Title div
-        html.Div([
-            # title wrapper div
-            html.Div([
-                # Rides Details title
-                html.H1(children='Rides Stats (12 hourly):')
-            ], style={"display": "inline-block", 'width': '33%'}),
-
-            # div for last updated text / button
-            html.Div([
-                html.Div([
-                    html.Div([
-                        # Average out put aggregation text
-                        html.Div(id='avg-power-output-agg-id',
-                                 style={'text-align': 'center', 'font-size': '18px'})
-                    ], style={"display": "inline-block", 'width': '50%'}),
-                    html.Div([
-                        # Total power output
-                        html.Div(id='total-power-output-agg-id',
-                                 style={'text-align': 'center', 'font-size': '18px'})
-                    ], style={"display": "inline-block", 'width': '50%'}),
-                ]),
-            ], style={"display": "inline-block", 'width': '47%'}),
-
-            # Tabs
-            html.Div([
-                    dcc.Tabs(id="tabs-graphs", value='tab-male',
-                             children=[
-                                 dcc.Tab(label='Pie', value='tab-pie'),
-                                 dcc.Tab(label='Bar', value='tab-bar'),
-                             ]
-                    ),
-                ], style={"display": "inline-block", 'width': '20%'}),
-        ]),
-
-        # Graphs by gender div
-        html.Div([
-            html.Div([
-                # Number of rides per gender graph
-                dcc.Graph(
-                    id='num-rides-graph-id'),
-            ], style={"display": "inline-block", 'width': '50%'}),
-            html.Div([
-                # Duration of rides per gender
-                dcc.Graph(
-                    id='duration-rides-graph-id'),
-            ], style={"display": "inline-block", 'width': '50%'}),
-        ]),
-
-        # Age aggregation graph div
-        html.Div([
-            # age aggregation graph div
-            dcc.Graph(
-                id='age-aggregation-graph-id'),
-        ]),
-    ], style={'padding-left': '20px', 'padding-right': '20px', 'padding-top': '20px'})
-
-# update name
-@app.callback(
-    Output(component_id='name-id', component_property='children'),
-    Input('user-interval-component', 'n_intervals'),
-)
-def update_name_div(n):
-    # TODO: link the name to the actual current data
-    first = user_details['first']
-    second = user_details['second']
-    return f'{first} {second}'
-
-# update age
-@app.callback(
-    Output(component_id='age-id', component_property='children'),
-    Input('user-interval-component', 'n_intervals'),
-)
-def update_age_div(n):
-     # TODO: link the age to the actual current data
-    age = user_age
-    return f'{age} years old'
-
-# update gender
-@app.callback(
-    Output(component_id='gender-id', component_property='children'),
-    Input('user-interval-component', 'n_intervals'),
-)
-def update_gender_div(n):
-     # TODO: link the gender to the actual current data
-    gender = user_details['gender']
-    return f'{gender}'
-
-# update weight
-@app.callback(
-    Output(component_id='weight-id', component_property='children'),
-    Input('user-interval-component', 'n_intervals'),
-)
-def update_weight_div(n):
-     # TODO: link the weight to the actual current data
-    weight = user_details['weight']
-    return f'{weight}KG'
-
-# update Height
-@app.callback(
-    Output(component_id='height-id', component_property='children'),
-    Input('user-interval-component', 'n_intervals'),
-)
-def update_height_div(n):
-     # TODO: link the height to the actual current data
-    height = user_details['height']
-    return f'{height}m'
+s3_client = boto3.client("s3")
 
 
-# Update current users ride's statistics
+def read_from_s3() -> dict:
+    """Loads data from an S3 bucket and returns a dictionary of the users details
+    """
+    S3_BUCKET_NAME = "big-data-bandits"
+    KEY = "current-user/user-data.json"
+    s3_client = boto3.client("s3")
+    response = s3_client.get_object(Bucket=S3_BUCKET_NAME, Key=KEY)
+    data = response["Body"].read()
+    user_details = json.loads(data)
+    return user_details
 
-# update duration
-@app.callback(
-    Output(component_id='duration-id', component_property='children'),
-    Input('user-interval-component', 'n_intervals'),
-)
-def update_duration_div(n):
-     # TODO: link the duration to the actual current data
-    duration = current_ride_data['duration']
-    return f'{duration} seconds'
-
-# update duration
-@app.callback(
-    Output(component_id='bpm-id', component_property='children'),
-    Input('user-interval-component', 'n_intervals'),
-)
-def update_bpm_div(n):
-     # TODO: link the bpm to the actual current data
-    bpm = current_ride_data['current_heart_rate']
-    return f'{bpm} BPM'
 
 @app.callback(
-    Output(component_id='bpm-id', component_property='style'),
-    Input('user-interval-component', 'n_intervals'),
+    [
+        Output(component_id="duration-id", component_property="children"),
+        Output(component_id="bpm-id", component_property="children"),
+        Output(component_id="rpm-id", component_property="children"),
+        Output(component_id="user-resistance-id",
+               component_property="children"),
+        Output(component_id="user-power-id",
+               component_property="children"),
+        Output(component_id="bpm-id", component_property="style")
+    ],
+    [Input("interval-component", "n_intervals")]
 )
-def update_bpm_div_color(n):
-    #  TODO: CODE FOR checking heart range in healthy range
-    if heart_rate >= heart_rate_abnormal:
-        return {'text-align': 'center', 'font-weight': 'bold', 'font-size': '20px', 'color':'red'}
-    return {'text-align': 'center', 'font-weight': 'bold', 'font-size': '20px', 'color':'green'}
+def run_consumer(interval: int) -> str:
+    """Reads data from the Kafka stream"""
+    reading = read_in_from_kafka()
+    if reading:
+        duration = str(reading["duration"])
+        bpm = reading["current_heart_rate"]
+        rpm = reading["current_rpm"]
+        resistance = reading["current_resistance"]
+        power = math.floor(reading["current_power"])
+        max_heart_rate = read_from_s3()["max_hrt"]
+        if bpm >= max_heart_rate:
+            style = {"text-align": "center", "font-weight": "bold",
+                     "font-size": "20px", "color": "red"}
+        else:
+            style = {"text-align": "center", "font-weight": "bold",
+                     "font-size": "20px", "color": "green"}
+
+    return f"{duration} seconds", f"{bpm} BPM", f"{rpm} RPM", f"{resistance} resistance", f"{power} W", style
 
 
-# update total power
 @app.callback(
-    Output(component_id='user-total-power-id', component_property='children'),
-    Input('user-interval-component', 'n_intervals'),
+    [
+        Output(component_id="name-id", component_property="children"),
+        Output(component_id="age-id", component_property="children"),
+        Output(component_id="gender-id", component_property="children"),
+        Output(component_id="weight-id", component_property="children"),
+        Output(component_id="height-id", component_property="children"),
+        Output(component_id="max-heart-rate-id", component_property="children")
+    ],
+    [Input("user-interval-component", "n_intervals")]
 )
-def update_power_div(n):
-     # TODO: link the total_power to the actual current data
-    total_power = current_ride_data['total_power']
-    return f'{total_power} W'
+def update_user_details(interval: int) -> tuple:
+    """Reads user details from an S3 bucket and returns a string"""
+    user_details = read_from_s3()
+
+    return f"""{user_details["name"]}""", f"""{user_details["age"]} years old""", \
+        f"""{(user_details["gender"]).capitalize()}""", f"""{user_details["weight"]} kg""",\
+        f"""{user_details["height"]} m""", f"""Max {user_details["max_hrt"]} BPM"""
 
 
-# User stats updated by the choice of tab
-
-# update user power
 @app.callback(
-    Output(component_id='user-power-id', component_property='children'),
-    [Input('tabs-current-max', 'value'),
-     Input('user-interval-component', 'n_intervals')]
+    [Output(component_id="latest-timestamp", component_property="children")],
+    [Input("riders-interval-component", "n_intervals")]
 )
-def update_bpm_div(tab, n):
-    # TODO: link the max_power / current_power to the data from actual current user
-    if tab == 'tab-current':
-        user_power = current_ride_data['current_power']
-        return f'{user_power} W'
-    user_power = current_ride_data['max_power']
-    return f'{user_power} W'
+def update_timestamp(interval: int) -> list:
+    """Updates the last updated timestamp at given intervals"""
+    TODAY = datetime.datetime.now()
+    TODAY_FORMATTED = datetime.datetime(TODAY.year, TODAY.month,
+                                        TODAY.day, TODAY.hour, TODAY.minute, TODAY.second)
+    LAST_DAY = TODAY_FORMATTED - datetime.timedelta(hours=12)
 
-# update user RPM
+    return [html.Span(f"Last updated: {TODAY_FORMATTED}")]
+
+
 @app.callback(
-    Output(component_id='rpm-id', component_property='children'),
-    [Input('tabs-current-max', 'value'),
-     Input('user-interval-component', 'n_intervals')]
+    [Output(component_id="user-latest-timestamp", component_property="children")],
+    [Input("interval-component", "n_intervals"), ]
 )
-def update_rpm_div(tab, n):
-    # TODO: link the max_rpm / current_rpm to the data from actual current user
-    if tab == 'tab-current':
-        rpm = current_ride_data['current_rpm']
-        return f'{rpm} RPM'
-    rpm = current_ride_data['max_rpm']
-    return f'{rpm} RPM'
+def update_timestamp(interval: int) -> list:
+    """Updates the last updated timestamp at given intervals"""
+    TODAY = datetime.datetime.now()
+    TODAY_FORMATTED = datetime.datetime(TODAY.year, TODAY.month,
+                                        TODAY.day, TODAY.hour, TODAY.minute, TODAY.second)
+    LAST_DAY = TODAY_FORMATTED - datetime.timedelta(hours=12)
 
-# update user resistance
+    return [html.Span(f"Last updated: {TODAY_FORMATTED}")]
+
+
 @app.callback(
-    Output(component_id='user-resistance-id', component_property='children'),
-    [Input('tabs-current-max', 'value'),
-     Input('user-interval-component', 'n_intervals')]
+    [Output(component_id="total-power", component_property="children")],
+    [Input("interval-component", "n_intervals")]
 )
-def update_rpm_div(tab, n):
-    # TODO: link the max_resistance / current_resistance to the data from actual current user
-    if tab == 'tab-current':
-        resistance = current_ride_data['current_resistance']
-        return f'{resistance}'
-    resistance = current_ride_data['max_resistance']
-    return f'{resistance}'
+def update_total_power(interval: int) -> list:
+    """Updates the total power of the rides for the last 12 hours"""
+    TODAY = datetime.datetime.now()
+    TODAY_FORMATTED = datetime.datetime(TODAY.year, TODAY.month,
+                                        TODAY.day, TODAY.hour, TODAY.minute, TODAY.second)
+    LAST_DAY = TODAY_FORMATTED - datetime.timedelta(hours=12)
+
+    cut_off = LAST_DAY
+    total_power = total_power_output(cut_off)
+
+    return [html.Span(f"Total Power Output: {total_power} W")]
 
 
-# Update Text for AGGREGATEs
-
-# update user power output average
 @app.callback(
-    Output(component_id='avg-power-output-agg-id',
-           component_property='children'),
-    Input('rides-interval-component', 'n_intervals'),
+    [Output(component_id="average-power", component_property="children")],
+    [Input("interval-component", "n_intervals")]
 )
-def update_avg_power_output_div(n):
-    # TODO: link the average power output to the data from DATA WAREHOUSE
-    average_power_output = '30'
-    return f'Average Power output: {average_power_output} W'
+def update_mean_power(interval: int) -> list:
+    """Updates the mean total power output of the rides for the last 12 hours"""
+    TODAY = datetime.datetime.now()
+    TODAY_FORMATTED = datetime.datetime(TODAY.year, TODAY.month,
+                                        TODAY.day, TODAY.hour, TODAY.minute, TODAY.second)
+    LAST_DAY = TODAY_FORMATTED - datetime.timedelta(hours=12)
+    mean_power = mean_power_output(LAST_DAY)
 
-# total power aggregate
+    return [html.Span(f"Mean Total Power Output: {mean_power} W")]
+
+
 @app.callback(
-    Output(component_id='total-power-output-agg-id',
-           component_property='children'),
-    Input('rides-interval-component', 'n_intervals')
+    [Output(component_id="gender-ride", component_property="children")],
+    [Input("interval-component", "n_intervals")]
 )
-def update_rpm_div(n):
-    # TODO: link the total power out putto the data from DATA WAREHOUSE
-    total_power_output = '200'
-    return f'Total Power output: {total_power_output} W'
+def update_rides_per_gender(interval: int) -> list:
+    """Updates the distribution of genders per ride for the last 12 hours"""
+    TODAY = datetime.datetime.now()
+    TODAY_FORMATTED = datetime.datetime(TODAY.year, TODAY.month,
+                                        TODAY.day, TODAY.hour, TODAY.minute, TODAY.second)
+    LAST_DAY = TODAY_FORMATTED - datetime.timedelta(hours=12)
+    gender_rider_dist = gender_rider_count(LAST_DAY)
+    rides_per_gender_fig = rides_per_gender_plot(
+        gender_rider_dist, LAST_DAY, TODAY_FORMATTED)
+
+    return [dcc.Graph(figure=rides_per_gender_fig,  style={"text-align": "center", "font-size": "10px"})]
 
 
-# Update Graphs
-
-# duration of rides split by gender graphs
 @app.callback(
-    Output(component_id='duration-rides-graph-id',
-           component_property='figure'),
-    [Input('tabs-graphs', 'value'),
-     Input('rides-interval-component', 'n_intervals')]
+    [Output(component_id="gender-duration", component_property="children")],
+    [Input("interval-component", "n_intervals")]
 )
-def update_rpm_div(tab, n):
-    if tab == 'Pie':
-        # TODO: RETURN PIE GRAPH FOR average duration split by gender
-        return
-    # TODO: RETURN BAR GRAPH FOR average duration split by gender
-    return
+def update_duration_per_gender(interval: int) -> list:
+    """Updates the total duration per gender for the last 12 hours"""
+    TODAY = datetime.datetime.now()
+    TODAY_FORMATTED = datetime.datetime(TODAY.year, TODAY.month,
+                                        TODAY.day, TODAY.hour, TODAY.minute, TODAY.second)
+    LAST_DAY = TODAY_FORMATTED - datetime.timedelta(hours=12)
+    gender_duration_dist = gender_duration_count(LAST_DAY)
+    duration_per_gender_fig = duration_per_gender_plot(
+        gender_duration_dist, LAST_DAY, TODAY_FORMATTED)
 
-# avg number of of rides split by gender
+    return [dcc.Graph(figure=duration_per_gender_fig, style={"text-align": "center", "font-size": "10px"})]
+
+
 @app.callback(
-    Output(component_id='num-rides-graph-id', component_property='figure'),
-    [Input('tabs-graphs', 'value'),
-     Input('rides-interval-component', 'n_intervals')]
+    [Output(component_id="age", component_property="children")],
+    [Input("interval-component", "n_intervals")]
 )
-def update_rpm_div(tab, n):
-    if tab == 'Pie':
-        # TODO: RETURN PIE GRAPH FOR number of rides split by gender
-        return
-    # TODO: RETURN BAR GRAPH FOR average number of rides split by gender
-    return
+def update_ages(interval: int) -> list:
+    """Updates the distribution of ages for the last 12 hours"""
+    TODAY = datetime.datetime.now()
+    TODAY_FORMATTED = datetime.datetime(TODAY.year, TODAY.month,
+                                        TODAY.day, TODAY.hour, TODAY.minute, TODAY.second)
+    LAST_DAY = TODAY_FORMATTED - datetime.timedelta(hours=12)
+    dob_per_ride_dist = dob_per_ride(LAST_DAY)
+    age_dist = extract_ages(dob_per_ride_dist)
+    age_fig = age_plot(age_dist, LAST_DAY, TODAY_FORMATTED)
 
-# avg number of of rides split by gender
-@app.callback(
-    Output(component_id='age-aggregation-graph-id',
-           component_property='figure'),
-    Input('rides-interval-component', 'n_intervals')
-)
-def update_rpm_div(n):
-    # TODO: GRAPH FOR AGE DISTRIBUTION OF RIDES
-    return
+    return [dcc.Graph(figure=age_fig, style={"text-align": "center",
+            "font-size": "10px"})]
 
 
-"""Putting this here for now, to test locally"""
 if __name__ == "__main__":
-
-    print('Beginning Kafka script')
-
-    found_user = False
-    ride_exists = False
-    user_id = None
-    heart_rate_abnormal=False
-    heart_rate_counter = 0
-    max_user_heart_rate = 0
-    c = kafka_consumer()
-    while True:
-        message = get_kafka_message(c)
-        if message:
-            print(message)
-            if "Getting user" in message:
-                ''' Resetting variables for new user'''
-                found_user = False
-                ride_exists = False
-                current_ride_data = {
-                    "datetime": None, "duration": None, "current_resistance": 0,
-                    "current_heart_rate": 0, "current_rpm": 0, "current_power": 0,
-                    "max_resistance": 0,"max_rpm": 0, "max_power": 0,
-                    "total_power": 0
-                }
-                heart_rate_abnormal=False
-                max_user_heart_rate = 0
-
-            elif 'user_id' in message:
-                '''New user found'''
-                found_user = True
-                ride_exists = True
-                user_details = extract_user_details(message)
-                user_id = int(user_details["user_id"])
-                user_age = age_from_dob(user_details["dob_date"])
-                max_heart_rate = get_max_heart_rate(user_age)
-
-            elif found_user and ("Ride - duration" in message):
-                ''' get first part of data if user exists'''
-                ride_duration_resistance = extract_ride_duration_resistance_data(
-                    message)
-
-                current_ride_data["duration"] = float(ride_duration_resistance["duration"])
-                current_ride_data["current_resistance"] = int(ride_duration_resistance["resistance"])
-                current_ride_data["datetime"]= ride_duration_resistance["date_time"]
-
-                if current_ride_data["max_resistance"] < int(ride_duration_resistance["resistance"]):
-                    current_ride_data["max_resistance"] = int(ride_duration_resistance["resistance"])
-                
-
-
-          
-            elif found_user and ("Telemetry - hrt" in message):
-                '''  get second part of data if user exists'''
-                ride_hrt_rpm_power = extract_ride_hrt_rpm_power(message)
-                heart_rate = int(ride_hrt_rpm_power["heart_rate"])
-
-                if (heart_rate > max_heart_rate):
-                    '''Trigger that checks the heart rate'''
-                    heart_rate_abnormal=True
-
-
-                current_ride_data["current_heart_rate"] = heart_rate
-                current_ride_data["current_rpm"] = int(ride_hrt_rpm_power["rpm"])
-                current_ride_data["current_power"] = float(ride_hrt_rpm_power["power"])
-                current_ride_data["total_power"] += float(ride_hrt_rpm_power["power"])
-
-                if current_ride_data["max_rpm"] < int(ride_duration_resistance["rpm"]):
-                    current_ride_data["max_rpm"] = int(ride_duration_resistance["rpm"])
-                if current_ride_data["max_power"] < int(ride_duration_resistance["power"]):
-                    current_ride_data["max_power"] = int(ride_duration_resistance["power"])
-                    
-        app.run_server(host="0.0.0.0", debug=True, port=8080)
+    app.run_server(host="0.0.0.0", debug=True, port=8080)

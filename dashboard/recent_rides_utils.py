@@ -11,20 +11,20 @@ from dash import Dash, dcc, html, Output, Input, callback
 load_dotenv(override=True, verbose=True)
 
 # Getting Data from Aurora RDBS AWS source
-rds_db = os.getenv('RDS_DB_NAME')
-rds_user = os.getenv('RDS_USER')
-rds_password = os.getenv('RDS_PASSWORD')
-rds_host = os.getenv('RDS_HOST')
+RDS_DB = os.getenv("RDS_DB_NAME")
+RDS_USER = os.getenv("RDS_USER")
+RDS_PASSWORD = os.getenv("RDS_PASSWORD")
+RDS_HOST = os.getenv("RDS_HOST")
 
 
 def get_db_connection() -> psycopg2.extensions.connection:
     """ Create a connection for database postgres Aurora"""
     try:
         conn = psycopg2.connect(f"""
-    dbname={rds_db}
-    user={rds_user} 
-    password={rds_password}
-    host={rds_host}""")
+    dbname={RDS_DB}
+    user={RDS_USER} 
+    password={RDS_PASSWORD}
+    host={RDS_HOST}""")
         return conn
     except:
         print("Error connecting to database.")
