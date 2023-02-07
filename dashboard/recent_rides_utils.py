@@ -62,23 +62,26 @@ def gender_rider_count(cut_off: datetime.datetime) -> pd.DataFrame:
 
     return gender_rides
 
+# remove cut_off etc 
+# add color='axis'
 
-def rides_per_gender_plot(data: pd.DataFrame, cut_off, time_now) -> px.pie:
+def rides_per_gender_plot(data: pd.DataFrame) -> px.pie:
     """Pie plot of the gender distributions for the riders for the past 24 hours
     """
     plot_data = {"gender": list(data["gender"]), "count": list(data["count"])}
 
     fig = px.pie(
-        plot_data, values="count", names="gender",
+        plot_data, values="count", names="gender", color='gender',
         labels={
             "count": "Count",
             "gender": "Gender"
-        }, title=f"Number of Rides per Gender ({cut_off} to {time_now})"
+        }, title=f"Number of Rides per Gender"
     )
     fig.update_layout(
         font=dict(
             size=18
-        )
+        ),
+        title_x=0.5
     )
 
     return fig
@@ -97,23 +100,24 @@ def gender_duration_count(cut_off: datetime.datetime) -> pd.DataFrame:
     return gender_duration
 
 
-def duration_per_gender_plot(data: pd.DataFrame, cut_off, time_now) -> px.bar:
+def duration_per_gender_plot(data: pd.DataFrame) -> px.bar:
     """Bar plot of the gender distributions for the riders for the past 24 hours
     """
     plot_data = {"gender": list(data["gender"]),
                  "total_duration": list(data["total_duration"])}
 
-    fig = px.bar(plot_data, x="gender", y="total_duration",
+    fig = px.bar(plot_data, x="gender", y="total_duration", color='gender',
                  labels={
                      "gender": "Gender",
                      "total_duration": "Total Duration (s)"
                  },
-                 title=f"Total Duration per Gender ({cut_off} to {time_now})"
+                 title=f"Total Duration per Gender"
                  )
     fig.update_layout(
         font=dict(
             size=18
-        )
+        ),
+        title_x=0.5
     )
 
     return fig
@@ -170,21 +174,22 @@ def extract_ages(df: pd.DataFrame) -> list:
     return age_brackets
 
 
-def age_plot(data: dict, cut_off, time_now) -> px.bar:
+def age_plot(data: dict) -> px.bar:
     """Bar chart plot of the age distributions based on the age brackets"""
     plot_data = {"bracket": list(data.keys()), "count": list(data.values())}
 
-    fig = px.bar(plot_data, x="bracket", y="count",
+    fig = px.bar(plot_data, x="bracket", y="count",color='bracket',
                  labels={
                      "count": "Count",
                      "bracket": "Age Bracket"
                  },
-                 title=f"Age Distribution ({cut_off} to {time_now})"
+                 title=f"Age Distribution"
                  )
     fig.update_layout(
         font=dict(
             size=18
-        )
+        ),
+        title_x=0.5
     )
 
     return fig
