@@ -62,8 +62,6 @@ def gender_rider_count(cut_off: datetime.datetime) -> pd.DataFrame:
 
     return gender_rides
 
-# remove cut_off etc 
-# add color='axis'
 
 def rides_per_gender_plot(data: pd.DataFrame) -> px.pie:
     """Pie plot of the gender distributions for the riders for the past 24 hours
