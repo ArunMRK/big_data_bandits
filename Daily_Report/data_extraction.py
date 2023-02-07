@@ -1,8 +1,6 @@
 from sqlwrapper import *
 import datetime
 import pandas as pd
-import numpy as np
-import csv
 import plotly.express as px
 
 conn = get_db_connection()
