@@ -14,7 +14,7 @@
 - NOTE: folders cannot be copied using scp; you will have to individually move the files around once they are copied into EC2
 - Connect to your EC2 instance's terminal and install requirements
   - <code>pip3 install -r requirements.txt</code>
-- Make a windows such that the EC2 instance can run persistently
+- Make a window such that the EC2 instance can run persistently
   - <code>sudo yum install tmux</code>
   - <code>tmux new -s ingestion_window</code>
 - Move into your newly created window
