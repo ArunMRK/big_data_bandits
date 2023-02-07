@@ -47,7 +47,7 @@ def read_from_s3():
      Output(component_id="bpm-id", component_property="style")],
     [Input("interval-component", "n_intervals"), ]
 )
-def run_consumer(n):
+def run_consumer(n): # Calls util function to get data from the kafka stream
     print('Attempting to read from kafka')
     reading = read_in_from_kafka()
     if reading:
