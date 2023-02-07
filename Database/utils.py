@@ -136,7 +136,7 @@ def current_ride_summary(current_ride_data: list) -> dict:
 
 def get_max_heart_rate(age: int) -> int:
     """Determines the maximum working heart rate given the users age."""
-    return round(220 - age)
+    return 220 - age
 
 
 def age_from_dob(born: datetime.date) -> int:
