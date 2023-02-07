@@ -7,10 +7,10 @@ from typing import NoReturn
 load_dotenv(override=True, verbose=True)
 
 # Getting Data from Aurora RDBS AWS source
-rds_db = os.getenv('RDS_DB_NAME')
-rds_user = os.getenv('RDS_USER')
-rds_password = os.getenv('RDS_PASSWORD')
-rds_host = os.getenv('RDS_HOST')
+rds_db = os.getenv("RDS_DB_NAME")
+rds_user = os.getenv("RDS_USER")
+rds_password = os.getenv("RDS_PASSWORD")
+rds_host = os.getenv("RDS_HOST")
 
 
 def get_db_connection() -> psycopg2.extensions.connection:
@@ -49,9 +49,9 @@ def upload_user_details_to_db(
     """Uploads given details into the user_details table"""
     sql = f"""INSERT INTO user_details (user_id, first, second, address, postcode, 
     dob_date, height, weight, gender, email, date_created, original_source, bike_serial)
-    VALUES  ('{details['user_id']}', '{details['first']}', '{details['second']}', 
-    '{details['address']}', '{details['postcode']}', '{details['dob_date']}', '{details['height']}','{details['weight']}', '{details['gender']}', '{details['email']}', 
-    '{details['date_created']}', '{details['original_source']}', '{details['bike_serial']}');"""
+    VALUES  ('{details["user_id"]}', '{details["first"]}', '{details["second"]}', 
+    '{details["address"]}', '{details["postcode"]}', '{details["dob_date"]}', '{details["height"]}', '{details["weight"]}', '{details["gender"]}', '{details["email"]}', 
+    '{details["date_created"]}', '{details["original_source"]}', '{details["bike_serial"]}');"""
     query_executer(conn, sql)
 
 
@@ -60,7 +60,7 @@ def upload_ride_data_for_user_id(
 ) -> NoReturn:
     """Uploading the ride data to the data warehouse"""
     sql = f"""INSERT INTO ride_details (user_id, started, finished, duration, avg_rpm, avg_heart_rate, avg_power, avg_resistance, max_rpm, max_heart_rate, max_power, max_resistance, total_power) VALUES 
-    ('{user_id}', '{data['started']}', '{data['finished']}', '{data['duration']}', '{data['avg_rpm']}', '{data['avg_heart_rate']}', '{data['avg_power']}', '{data['avg_resistance']}', '{data['max_rpm']}', '{data['max_heart_rate']}', '{data['max_power']}', '{data['max_resistance']}', '{data['total_power']}');"""
+    ('{user_id}', '{data["started"]}', '{data["finished"]}', '{data["duration"]}', '{data["avg_rpm"]}', '{data["avg_heart_rate"]}', '{data["avg_power"]}', '{data["avg_resistance"]}', '{data["max_rpm"]}', '{data["max_heart_rate"]}', '{data["max_power"]}', '{data["max_resistance"]}', '{data["total_power"]}');"""
     query_executer(conn, sql)
 
 

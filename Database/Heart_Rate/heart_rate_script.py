@@ -20,18 +20,18 @@ def get_user_details(
 
 def email_alert(user_alert_data: dict) -> NoReturn:
     """Function that sends an email to a user"""
-    client = boto3.client('ses', region_name='eu-west-2')
+    client = boto3.client("ses", region_name="eu-west-2")
     response = client.send_email(
         Destination={
-            'ToAddresses': [
-                'big.data.bandits@gmail.com'
+            "ToAddresses": [
+                "bicycle-ceo@sigmalabs.co.uk"
             ],
         },
         Message={
-            'Body': {
-                'Html': {
-                    'Charset': 'UTF-8',
-                    'Data': f"""<p>To whom it may concern, <br>
+            "Body": {
+                "Html": {
+                    "Charset": "UTF-8",
+                    "Data": f"""<p>To whom it may concern, <br>
                     <br>
 On <b>{user_alert_data["date"]}</b>, a user named <b>{user_alert_data["first"]} {user_alert_data["second"]}</b> aged <b>{user_alert_data["age"]}</b>, exceeded their maximum working heart rate (<b>{user_alert_data["max_heart_rate"]} bpm</b>) with a maximum reading of <b>{user_alert_data["user_heart_rate"]}</b> bpm for 5 consecutive logs. <br>
 <br>
@@ -40,15 +40,15 @@ Please be advised that this is not a healthy heart rate and can cause serious is
 Regards, <br>
 Big Data Bandits</p>""",
                 },
-                'Text': {
-                    'Charset': 'UTF-8',
-                    'Data': 'This is for those who cannot read HTML.',
+                "Text": {
+                    "Charset": "UTF-8",
+                    "Data": "This is for those who cannot read HTML.",
                 },
             },
-            'Subject': {
-                'Charset': 'UTF-8',
-                'Data': f'High heart rate alert for user {user_alert_data["first"]} {user_alert_data["second"]} with a heart rate of {user_alert_data["user_heart_rate"]} bpm',
+            "Subject": {
+                "Charset": "UTF-8",
+                "Data": f"""High heart rate alert for user {user_alert_data["first"]} {user_alert_data["second"]} with a heart rate of {user_alert_data["user_heart_rate"]} bpm""",
             },
         },
-        Source='big.data.bandits@gmail.com',
+        Source="big.data.bandits@gmail.com",
     )
