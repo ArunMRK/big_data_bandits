@@ -96,7 +96,7 @@ if __name__ == "__main__":
                     if heart_rate > max_user_heart_rate:
                         max_user_heart_rate = heart_rate
 
-                    if heart_rate_counter >= 5:
+                    if heart_rate_counter >= 10:
                         # sends email if heart rate is dangerous
                         user_alert_data = get_user_details(
                             user_age, user_details["first"], user_details["second"], max_user_heart_rate, max_heart_rate, ride_duration_resistance["date_time"])

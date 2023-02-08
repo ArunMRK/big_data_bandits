@@ -122,7 +122,7 @@ layout = \
                 html.H2(children="Rides Stats:")
             ], style={"display": "inline-block", "width": "15%", "padding-top": "6px"}),
             html.Div([
-                html.H3(id="date")
+                html.H3(id="date", style={"text-align": "center"})
             ], style={"display": "inline-block", "width": "60%", "padding-left": "140px"}),
             html.Div([
                 html.Div(id="latest-timestamp", style={"float": "right"})
