@@ -11,20 +11,20 @@ from dash import Dash, dcc, html, Output, Input, callback
 load_dotenv(override=True, verbose=True)
 
 # Getting Data from Aurora RDBS AWS source
-rds_db = os.getenv('RDS_DB_NAME')
-rds_user = os.getenv('RDS_USER')
-rds_password = os.getenv('RDS_PASSWORD')
-rds_host = os.getenv('RDS_HOST')
+RDS_DB = os.getenv("RDS_DB_NAME")
+RDS_USER = os.getenv("RDS_USER")
+RDS_PASSWORD = os.getenv("RDS_PASSWORD")
+RDS_HOST = os.getenv("RDS_HOST")
 
 
 def get_db_connection() -> psycopg2.extensions.connection:
     """ Create a connection for database postgres Aurora"""
     try:
         conn = psycopg2.connect(f"""
-    dbname={rds_db}
-    user={rds_user} 
-    password={rds_password}
-    host={rds_host}""")
+    dbname={RDS_DB}
+    user={RDS_USER} 
+    password={RDS_PASSWORD}
+    host={RDS_HOST}""")
         return conn
     except:
         print("Error connecting to database.")
@@ -63,22 +63,23 @@ def gender_rider_count(cut_off: datetime.datetime) -> pd.DataFrame:
     return gender_rides
 
 
-def rides_per_gender_plot(data: pd.DataFrame, cut_off, time_now) -> px.pie:
+def rides_per_gender_plot(data: pd.DataFrame) -> px.pie:
     """Pie plot of the gender distributions for the riders for the past 24 hours
     """
     plot_data = {"gender": list(data["gender"]), "count": list(data["count"])}
 
     fig = px.pie(
-        plot_data, values="count", names="gender",
+        plot_data, values="count", names="gender", color="gender",
         labels={
             "count": "Count",
             "gender": "Gender"
-        }, title=f"Number of Rides per Gender ({cut_off} to {time_now})"
+        }, title="Number of Rides per Gender"
     )
     fig.update_layout(
         font=dict(
             size=18
-        )
+        ),
+        title_x=0.5
     )
 
     return fig
@@ -97,23 +98,24 @@ def gender_duration_count(cut_off: datetime.datetime) -> pd.DataFrame:
     return gender_duration
 
 
-def duration_per_gender_plot(data: pd.DataFrame, cut_off, time_now) -> px.bar:
+def duration_per_gender_plot(data: pd.DataFrame) -> px.bar:
     """Bar plot of the gender distributions for the riders for the past 24 hours
     """
     plot_data = {"gender": list(data["gender"]),
                  "total_duration": list(data["total_duration"])}
 
-    fig = px.bar(plot_data, x="gender", y="total_duration",
+    fig = px.bar(plot_data, x="gender", y="total_duration", color="gender",
                  labels={
                      "gender": "Gender",
                      "total_duration": "Total Duration (s)"
                  },
-                 title=f"Total Duration per Gender ({cut_off} to {time_now})"
+                 title="Total Duration per Gender"
                  )
     fig.update_layout(
         font=dict(
             size=18
-        )
+        ),
+        title_x=0.5
     )
 
     return fig
@@ -170,21 +172,22 @@ def extract_ages(df: pd.DataFrame) -> list:
     return age_brackets
 
 
-def age_plot(data: dict, cut_off, time_now) -> px.bar:
+def age_plot(data: dict) -> px.bar:
     """Bar chart plot of the age distributions based on the age brackets"""
     plot_data = {"bracket": list(data.keys()), "count": list(data.values())}
 
-    fig = px.bar(plot_data, x="bracket", y="count",
+    fig = px.bar(plot_data, x="bracket", y="count", color="bracket",
                  labels={
                      "count": "Count",
                      "bracket": "Age Bracket"
                  },
-                 title=f"Age Distribution ({cut_off} to {time_now})"
+                 title="Age Distribution"
                  )
     fig.update_layout(
         font=dict(
             size=18
-        )
+        ),
+        title_x=0.5
     )
 
     return fig
