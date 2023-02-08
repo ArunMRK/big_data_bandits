@@ -24,7 +24,7 @@ def email_alert(user_alert_data: dict) -> NoReturn:
     response = client.send_email(
         Destination={
             "ToAddresses": [
-                "bicycle-ceo@sigmalabs.co.uk"
+                "big.data.bandits@gmail.com"
             ],
         },
         Message={

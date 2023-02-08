@@ -53,7 +53,7 @@ if __name__ == "__main__":
                 notification_sent = False
 
             # new user found block
-            elif 'user_id' in message:
+            elif "user_id" in message:
                 print(f"{datetime.datetime.now()}: New user found in stream...")
                 found_user = True
                 ride_exists = True
