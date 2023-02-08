@@ -27,8 +27,7 @@ def unix_to_date(timestamp: int) -> datetime.date:
     """Take in unix timestamp (in ms, so have to divide by 1,000 to get seconds) and return date
     """
     timestamp /= 1000
-    time_and_date = datetime.datetime.fromtimestamp(
-        timestamp)
+    time_and_date = datetime.datetime.fromtimestamp(timestamp)
 
     return time_and_date.date()
 
@@ -62,7 +61,7 @@ def extract_date(message: str) -> datetime.time:
     """Extracts the date from the kafka data"""
     regex = "[0-9]{4}(-[0-9]{2}){2}"
     result = re.search(regex, message).group(0)
-    date = datetime.datetime.strptime(result, '%Y-%m-%d').date()
+    date = datetime.datetime.strptime(result, "%Y-%m-%d").date()
 
     return date
 
@@ -71,7 +70,7 @@ def extract_date_time(message: str) -> datetime.datetime:
     """Extracts the date from the kafka data"""
     regex = "[0-9]{4}(-[0-9]{2}){2} [0-9]{2}:[0-9]{2}:[0-9]{2}"
     result = re.search(regex, message).group(0)
-    date = datetime.datetime.strptime(result, '%Y-%m-%d %H:%M:%S')
+    date = datetime.datetime.strptime(result, "%Y-%m-%d %H:%M:%S")
 
     return date
 
@@ -136,7 +135,6 @@ def current_ride_summary(current_ride_data: list) -> dict:
 
 def get_max_heart_rate(age: int) -> int:
     """Determines the maximum working heart rate given the users age."""
-
     return 220 - age + 10
 
 

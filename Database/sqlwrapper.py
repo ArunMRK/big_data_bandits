@@ -6,7 +6,6 @@ from typing import NoReturn
 
 load_dotenv(override=True, verbose=True)
 
-# Getting Data from Aurora RDBS AWS source
 rds_db = os.getenv("RDS_DB_NAME")
 rds_user = os.getenv("RDS_USER")
 rds_password = os.getenv("RDS_PASSWORD")
@@ -69,7 +68,7 @@ def check_user_exists(
 ) -> bool:
     """Checks whether a user already exists in user_details"""
     sql = f"""SELECT * FROM user_details
-        WHERE user_id ='{user_id}'"""
+        WHERE user_id ='{user_id}';"""
     result = query_executer(conn, sql)
 
     if result:
