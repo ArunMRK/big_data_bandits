@@ -88,7 +88,6 @@ def rides_per_gender_plot(data: pd.DataFrame) -> px.pie:
 def gender_duration_count(cut_off: datetime.datetime) -> pd.DataFrame:
     """Determines the unique riders and extracts all information about them into a Dataframe
     """
-
     sql = f"""SELECT DISTINCT user_details.gender, SUM(ride_details.duration) AS total_duration FROM user_details JOIN ride_details ON ride_details.user_id = user_details.user_id WHERE ride_details.started > '{cut_off}' GROUP BY user_details.gender;"""
     data = query_executer(conn, sql)
     colNames = data[0].keys()

@@ -24,6 +24,7 @@ def get_formatted_times() -> datetime.datetime:
     TODAY_FORMATTED = datetime.datetime(TODAY.year, TODAY.month,
                                         TODAY.day, TODAY.hour, TODAY.minute, TODAY.second)
     LAST_DAY = TODAY_FORMATTED - datetime.timedelta(hours=12)
+
     return TODAY_FORMATTED, LAST_DAY
 
 
@@ -36,6 +37,7 @@ def read_from_s3() -> dict:
     response = s3_client.get_object(Bucket=S3_BUCKET_NAME, Key=KEY)
     data = response["Body"].read()
     user_details = json.loads(data)
+
     return user_details
 
 
@@ -52,7 +54,7 @@ def read_from_s3() -> dict:
     ],
     [Input("interval-component", "n_intervals")]
 )
-def run_consumer(interval: int) -> str:
+def run_consumer(interval: int) -> tuple:
     """Reads data from the Kafka stream"""
     reading = read_in_from_kafka()
     if reading:
@@ -96,7 +98,7 @@ def update_user_details(interval: int) -> tuple:
     [Output(component_id="date", component_property="children")],
     [Input("riders-interval-component", "n_intervals")]
 )
-def update_date(n):
+def update_date(interval: int) -> list:
     """Updates the date for the ride details title"""
     TODAY, LAST_DAY = get_formatted_times()
     return [f"{LAST_DAY} - {TODAY}"]
@@ -189,7 +191,7 @@ def update_ages(interval: int) -> list:
     age_fig = age_plot(age_dist)
 
     return [dcc.Graph(figure=age_fig, style={"text-align": "center",
-            "font-size": "10px"})]
+                                             "font-size": "10px"})]
 
 
 if __name__ == "__main__":
