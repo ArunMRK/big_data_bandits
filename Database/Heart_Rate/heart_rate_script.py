@@ -33,7 +33,7 @@ def email_alert(user_alert_data: dict) -> NoReturn:
                     "Charset": "UTF-8",
                     "Data": f"""<p>To whom it may concern, <br>
                     <br>
-On <b>{user_alert_data["date"]}</b>, a user named <b>{user_alert_data["first"]} {user_alert_data["second"]}</b> aged <b>{user_alert_data["age"]}</b>, exceeded their maximum working heart rate (<b>{user_alert_data["max_heart_rate"]} bpm</b>) with a maximum reading of <b>{user_alert_data["user_heart_rate"]}</b> bpm for 5 consecutive logs. <br>
+On <b>{user_alert_data["date"]}</b>, a user named <b>{user_alert_data["first"]} {user_alert_data["second"]}</b> aged <b>{user_alert_data["age"]}</b>, exceeded their maximum working heart rate (<b>{user_alert_data["max_heart_rate"]} bpm</b>) with a maximum reading of <b>{user_alert_data["user_heart_rate"]}</b> bpm for 10 consecutive logs. <br>
 <br>
 Please be advised that this is not a healthy heart rate and can cause serious issues if this heart rate persists. <br>
 <br>
