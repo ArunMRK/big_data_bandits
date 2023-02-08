@@ -69,7 +69,7 @@ def rides_per_gender_plot(data: pd.DataFrame) -> px.pie:
     plot_data = {"gender": list(data["gender"]), "count": list(data["count"])}
 
     fig = px.pie(
-        plot_data, values="count", names="gender", color='gender',
+        plot_data, values="count", names="gender", color="gender",
         labels={
             "count": "Count",
             "gender": "Gender"
@@ -104,7 +104,7 @@ def duration_per_gender_plot(data: pd.DataFrame) -> px.bar:
     plot_data = {"gender": list(data["gender"]),
                  "total_duration": list(data["total_duration"])}
 
-    fig = px.bar(plot_data, x="gender", y="total_duration", color='gender',
+    fig = px.bar(plot_data, x="gender", y="total_duration", color="gender",
                  labels={
                      "gender": "Gender",
                      "total_duration": "Total Duration (s)"
@@ -176,7 +176,7 @@ def age_plot(data: dict) -> px.bar:
     """Bar chart plot of the age distributions based on the age brackets"""
     plot_data = {"bracket": list(data.keys()), "count": list(data.values())}
 
-    fig = px.bar(plot_data, x="bracket", y="count", color='bracket',
+    fig = px.bar(plot_data, x="bracket", y="count", color="bracket",
                  labels={
                      "count": "Count",
                      "bracket": "Age Bracket"

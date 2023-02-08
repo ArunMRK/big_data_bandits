@@ -144,9 +144,9 @@ layout = \
             html.Div([
                 # Rides Details title
                 html.H2(children="Rides Stats:")
-            ], style={"display": "inline-block", "width": "15%", 'padding-top': '6px'}),
+            ], style={"display": "inline-block", "width": "15%", "padding-top": "6px"}),
             html.Div([
-                html.H3(id='date')
+                html.H3(id="date")
             ], style={"display": "inline-block", "width": "60%", "padding-left": "140px"}),
             html.Div([
                 html.Div(id="latest-timestamp", style={"float": "right"})
@@ -160,15 +160,15 @@ layout = \
                         # Average out put aggregation text
                         html.Div(id="average-power",
                                  style={"text-align": "center",
-                                        "font-size": "30px", 'font-size': '22px'})
+                                        "font-size": "30px", "font-size": "22px"})
                     ], style={"display": "inline-block", "width": "50%"}),
                     html.Div([
                         # Total power output
                         html.Div(id="total-power",
                                  style={"text-align": "center",
-                                        "font-size": "30px", 'font-size': '22px'})
+                                        "font-size": "30px", "font-size": "22px"})
                     ], style={"display": "inline-block", "width": "50%"}),
-                ], style={"padding-top": '25px'}),
+                ], style={"padding-top": "25px"}),
             ])
         ]),
         # Horizontal row

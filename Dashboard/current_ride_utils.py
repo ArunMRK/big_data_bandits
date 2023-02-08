@@ -59,6 +59,7 @@ def extract_date(message: str) -> datetime.time:
     regex = "[0-9]{4}(-[0-9]{2}){2}"
     result = re.search(regex, message).group(0)
     date = datetime.datetime.strptime(result, "%Y-%m-%d").date()
+
     return date
 
 
@@ -131,7 +132,7 @@ def current_ride_summary(current_ride_data: list) -> dict:
 
 def get_max_heart_rate(age: int) -> int:
     """Determines the maximum working heart rate given the users age."""
-    return 220 - age
+    return 230 - age
 
 
 def age_from_dob(born: datetime.date) -> int:

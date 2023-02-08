@@ -18,12 +18,14 @@ conn = get_db_connection()
 
 s3_client = boto3.client("s3")
 
-def get_formatted_times() -> list[datetime.datetime, datetime.datetime]:
+
+def get_formatted_times() -> datetime.datetime:
     TODAY = datetime.datetime.now()
     TODAY_FORMATTED = datetime.datetime(TODAY.year, TODAY.month,
                                         TODAY.day, TODAY.hour, TODAY.minute, TODAY.second)
     LAST_DAY = TODAY_FORMATTED - datetime.timedelta(hours=12)
-    return [TODAY_FORMATTED, LAST_DAY]
+    return TODAY_FORMATTED, LAST_DAY
+
 
 def read_from_s3() -> dict:
     """Loads data from an S3 bucket and returns a dictionary of the users details
@@ -89,6 +91,7 @@ def update_user_details(interval: int) -> tuple:
         f"""{(user_details["gender"]).capitalize()}""", f"""{user_details["weight"]} kg""",\
         f"""{user_details["height"]} cm""", f"""Max Threshold BPM {user_details["max_hrt"]}"""
 
+
 @app.callback(
     [Output(component_id="date", component_property="children")],
     [Input("riders-interval-component", "n_intervals")]
@@ -97,6 +100,7 @@ def update_date(n):
     """Updates the date for the ride details title"""
     TODAY, LAST_DAY = get_formatted_times()
     return [f"{LAST_DAY} - {TODAY}"]
+
 
 @app.callback(
     [Output(component_id="latest-timestamp", component_property="children")],
@@ -165,7 +169,7 @@ def update_rides_per_gender(interval: int) -> list:
 )
 def update_duration_per_gender(interval: int) -> list:
     """Updates the total duration per gender for the last 12 hours"""
-    TODAY, LAST_DAY= get_formatted_times()
+    TODAY, LAST_DAY = get_formatted_times()
     gender_duration_dist = gender_duration_count(LAST_DAY)
     duration_per_gender_fig = duration_per_gender_plot(
         gender_duration_dist)
