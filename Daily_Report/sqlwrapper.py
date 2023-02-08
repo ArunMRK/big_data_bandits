@@ -6,11 +6,10 @@ from typing import NoReturn
 
 load_dotenv(override=True, verbose=True)
 
-# Getting Data from Aurora RDBS AWS source
-rds_db = os.getenv('RDS_DB_NAME')
-rds_user = os.getenv('RDS_USER')
-rds_password = os.getenv('RDS_PASSWORD')
-rds_host = os.getenv('RDS_HOST')
+rds_db = os.getenv("RDS_DB_NAME")
+rds_user = os.getenv("RDS_USER")
+rds_password = os.getenv("RDS_PASSWORD")
+rds_host = os.getenv("RDS_HOST")
 
 
 def get_db_connection() -> psycopg2.extensions.connection:
