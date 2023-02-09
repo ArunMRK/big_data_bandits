@@ -1,0 +1,43 @@
+<html>
+  <link rel="stylesheet" href="../static/index.css" />
+  <script src="../static/index.js"></script>
+  <head>
+    <title>Big Data Bandits API for Deloton</title>
+  </head>
+
+  <body>
+    <h1>API: Big Data Bandits API for Deloton</h1>
+
+    <table>
+  <tr>
+    <th>Functionality</th>
+    <th>Path</th>
+  </tr>
+  <tr>
+    <td>Get a ride with a specific ID</td>
+    <td>/ride/<code>{int:ride_id}</code></td>
+  </tr>
+  <tr>
+    <td>Get rider information (e.g. name, gender, age, avg. heart rate, number of rides)</td>
+    <td>/rider/<code>{string:user_id}</code></td>
+  </tr>
+  <tr>
+    <td>Get all rides for a rider with a specific ID</td>
+    <td>/rider/<code>{string:user_id}</code>/rides</td>
+  </tr>
+    <tr>
+    <td>Delete a ride with a specific ID</td>
+    <td>/ride/<code>{int:ride_id}</code>/delete</td>
+  </tr>
+    <tr>
+    <td>Get all rides for today</td>
+    <td>/daily</td>
+  </tr>
+  </tr>
+    <tr>
+    <td>Get all rides for a specific day</td>
+    <td>/daily<code>?date=dd-mm-yyyy</code></td>
+  </tr>
+
+  </body>
+</html>

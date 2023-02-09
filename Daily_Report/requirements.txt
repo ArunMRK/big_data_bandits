@@ -1,0 +1,8 @@
+kaleido
+psycopg2-binary
+python-dotenv
+pandas
+plotly
+numpy
+boto3
+pdfkit
