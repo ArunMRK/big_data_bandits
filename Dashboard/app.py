@@ -43,6 +43,30 @@ app = Dash(__name__, external_stylesheets=[
            dbc.themes.ZEPHYR], use_pages=True)
 app.layout = html.Div(dash.page_container)
 
+conn = get_db_connection()
+s3_client = boto3.client("s3")
+
+def kafka_consumer() -> Consumer:
+    """Makes a connection to a Kafka consumer"""
+    c = Consumer({
+        "bootstrap.servers": os.getenv("BOOTSTRAP_SERVERS"),
+        "group.id": f"deloton_stream" + str(uuid.uuid1()),
+        "security.protocol": "SASL_SSL",
+        "sasl.mechanisms": "PLAIN",
+        "sasl.username": os.getenv("SASL_USERNAME"),
+        "sasl.password": os.getenv("SASL_PASSWORD"),
+        "fetch.wait.max.ms": 6000,
+        "auto.offset.reset": "latest",
+        "enable.auto.commit": "false",
+        "max.poll.interval.ms": "86400000",
+        "topic.metadata.refresh.interval.ms": "-1",
+        "client.id": "id-002-0068fsc",
+    })
+    c.subscribe(["deloton"])
+    return c
+
+consumer = kafka_consumer()
+
 
 def get_formatted_times() -> datetime.datetime:
     TODAY = datetime.datetime.now()
@@ -58,7 +82,6 @@ def read_from_s3() -> dict:
     """
     S3_BUCKET_NAME = "big-data-bandits"
     KEY = "current-user/user-data.json"
-    s3_client = boto3.client("s3")
     response = s3_client.get_object(Bucket=S3_BUCKET_NAME, Key=KEY)
     data = response["Body"].read()
     user_details = json.loads(data)
@@ -84,10 +107,10 @@ def read_from_s3() -> dict:
     ],
     [Input("interval-component", "n_intervals")]
 )
+
 def run_consumer(interval: int) -> tuple:
     """Reads data from the Kafka stream"""
     reading, user_details = read_in_from_kafka(consumer)
-
     # dealing with bike data
     if reading:
         duration = reading["duration"]
@@ -104,8 +127,8 @@ def run_consumer(interval: int) -> tuple:
         else:
             style = {"text-align": "center", "font-weight": "bold",
                      "font-size": "20px", "color": "green"}
-
     # if no user found, do not update user details
+
     if user_details:
         return f"""{user_details["name"]}""", f"""{user_details["age"]} years old""", \
         f"""{(user_details["gender"]).capitalize()}""", f"""{user_details["weight"]} kg""",\
@@ -114,7 +137,7 @@ def run_consumer(interval: int) -> tuple:
         f"""{power} W""", style
 
     return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update,\
-             f"{duration} seconds", f"{bpm} BPM", f"{rpm} RPM", f"{resistance} resistance", f"{power} W", style
+            f"{duration} seconds", f"{bpm} BPM", f"{rpm} RPM", f"{resistance} resistance", f"{power} W", style
    
 
 @app.callback(

@@ -16,4 +16,3 @@ def get_kafka_messages(consumer: Consumer) -> str:
     
     consumer.commit()
     return messages
-        
