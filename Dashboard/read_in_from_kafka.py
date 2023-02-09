@@ -1,5 +1,6 @@
 from kafka_consumer import *
 from current_ride_utils import *
+
 def read_in_from_kafka(consumer: Consumer) -> dict:
     """Reads data from the Kafka consumer"""
     user_details = None
@@ -10,7 +11,9 @@ def read_in_from_kafka(consumer: Consumer) -> dict:
         "total_power": 0
     }
     messages = get_kafka_messages(consumer)
+
     for message in messages:
+
         if "Getting user" in message:
             # resetting user_details for new user
             current_ride_data = {
@@ -24,6 +27,7 @@ def read_in_from_kafka(consumer: Consumer) -> dict:
             print("FOUND USER")
             user_details = extract_user_details(message)
         elif ("Ride - duration" in message):
+
             ride_duration_resistance = extract_ride_duration_resistance_data(
                 message)
             current_ride_data["duration"] = float(
@@ -35,6 +39,7 @@ def read_in_from_kafka(consumer: Consumer) -> dict:
                 current_ride_data["max_resistance"] = int(
                     ride_duration_resistance["resistance"])
         elif ("Telemetry - hrt" in message):
+
             ride_hrt_rpm_power = extract_ride_hrt_rpm_power(message)
             heart_rate = int(ride_hrt_rpm_power["heart_rate"])
             current_ride_data["current_heart_rate"] = heart_rate
@@ -43,7 +48,6 @@ def read_in_from_kafka(consumer: Consumer) -> dict:
                 ride_hrt_rpm_power["power"])
             current_ride_data["total_power"] += float(
                 ride_hrt_rpm_power["power"])
-    
-    # print(current_ride_data)
-    # print(user_details)
-    return current_ride_data, user_details
+
+    return current_ride_data, user_details 
+
