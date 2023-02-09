@@ -31,7 +31,7 @@ def get_kafka_messages(consumer: Consumer) -> str:
     """Gets the latest log from a Kafka consumer"""
     count = 0
     messages = []
-    while count < 25:
+    while count < 2:
         try:
             messages.append(consumer.poll(1.0).value().decode())
             count += 1
