@@ -1,15 +1,20 @@
-from dash import Dash, dcc, html, Output, Input
 import dash
 import dash_bootstrap_components as dbc
 import datetime
-from recent_rides_utils import *
 import json
-import boto3
+import math
+import os
+import uuid
 from kafka_consumer import *
 from current_ride_utils import *
 from read_in_from_kafka import *
-import math
 from confluent_kafka import Consumer
+from recent_rides_utils import *
+from dash import Dash, dcc, html, Output, Input
+from dotenv import load_dotenv
+
+
+load_dotenv(override=True, verbose=True)
 
 def kafka_consumer() -> Consumer:
     """Makes a connection to a Kafka consumer"""
@@ -31,14 +36,12 @@ def kafka_consumer() -> Consumer:
     return c
 
 consumer = kafka_consumer()
+conn = get_db_connection()
+
 
 app = Dash(__name__, external_stylesheets=[
            dbc.themes.ZEPHYR], use_pages=True)
 app.layout = html.Div(dash.page_container)
-
-conn = get_db_connection()
-
-s3_client = boto3.client("s3")
 
 
 def get_formatted_times() -> datetime.datetime:

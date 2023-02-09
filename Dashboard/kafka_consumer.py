@@ -15,6 +15,5 @@ def get_kafka_messages(consumer: Consumer) -> str:
         messages.append(message.value().decode())
     
     consumer.commit()
-
     return messages
         

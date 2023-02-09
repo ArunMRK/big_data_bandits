@@ -41,10 +41,10 @@ def extract_user_details(message: str) -> dict:
     user_age = age_from_dob(dob_date)
     max_heart_rate = get_max_heart_rate(user_age)
 
-    user_dict = {"name": name[0]+" "+name[-1], "age":user_age,
+    user_dict = {"name": name[0] + " " + name[-1], "age": user_age,
                 "max_hrt": max_heart_rate,
                 "height": raw_data["height_cm"],
-                 "weight": raw_data["weight_kg"], "gender": raw_data["gender"],
+                "weight": raw_data["weight_kg"], "gender": raw_data["gender"],
                 }
 
     return user_dict

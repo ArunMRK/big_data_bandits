@@ -2,7 +2,7 @@ from kafka_consumer import *
 from current_ride_utils import *
 
 
-def read_in_from_kafka(consumer) -> dict:
+def read_in_from_kafka(consumer: Consumer) -> dict:
     """Reads data from the Kafka consumer"""
     user_details = None
     current_ride_data = {
@@ -11,8 +11,9 @@ def read_in_from_kafka(consumer) -> dict:
         "max_resistance": 0, "max_rpm": 0, "max_power": 0,
         "total_power": 0
     }
-    
+
     messages = get_kafka_messages(consumer)
+
     for message in messages:
 
         if "Getting user" in message:
