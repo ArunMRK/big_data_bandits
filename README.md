@@ -9,9 +9,9 @@ The incoming data was unstructured and dirty meaning that it had to be cleaned s
 The data warehouse ingestion script is hosted on AWS EC2 and runs persistently.
 
 ## Heart Rate Alerts
-- The aim of this deliverable was to send an email (AWS SES) once a users heart rate went outside of their maximum allowed working heart rate, calculated using (220 - age).
+- The aim of this deliverable was to send an email (AWS SES) once a users heart rate went outside of their maximum allowed working heart rate, calculated using (230 - age).
 - Whenever a new user is spotted in the stream, their maximum allowed heart rate is calculated and used to compare against their current heart rate.
-- If the users heart rate exceeds the maximum allowed heart rate 5 consecutive times, then an email is sent, within 15 seconds, to alert that their heart rate has exceeded the allowed limit.
+- If the users heart rate exceeds the maximum allowed heart rate 10 consecutive times, then an email is sent, within 15 seconds, to alert that their heart rate has exceeded the allowed limit.
 - We implemented a trigger that only allows one email to be sent per ride, with the aim of reducing spam.
 - This heart rate alert system runs within the data warehouse ingestion script (AWS EC2) in order to have quick access to the users heart rate.
 
@@ -19,7 +19,7 @@ The data warehouse ingestion script is hosted on AWS EC2 and runs persistently.
 - We developed a live dashboard containing information about a current user on a ride, and information about ride in the past 12 hours.
 - The dashboard is running persistently on AWS EC2.
 - Current Ride:
-	- The current ride data updates every 15 seconds in order for the user to get the most recent data regarding their ride.
+	- The current ride data updates every 2 seconds in order for the user to get the most recent data regarding their ride.
 	- The included data is the users demographics, along with their ride statistics, such as their current heart rate and whether it is in the healthy range.
 	- Alongside that, their duration is shown along with their mean and total power outputs.
 - Recent Rides:
