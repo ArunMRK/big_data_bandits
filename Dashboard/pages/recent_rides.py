@@ -23,7 +23,7 @@ layout = \
         ),
         dcc.Interval(
             id="interval-component",
-            interval=15*1000,
+            interval=1*1000,
             n_intervals=0
         ),
 

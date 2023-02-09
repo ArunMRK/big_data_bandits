@@ -9,6 +9,28 @@ from kafka_consumer import *
 from current_ride_utils import *
 from read_in_from_kafka import *
 import math
+from confluent_kafka import Consumer
+
+def kafka_consumer() -> Consumer:
+    """Makes a connection to a Kafka consumer"""
+    c = Consumer({
+        "bootstrap.servers": os.getenv("BOOTSTRAP_SERVERS"),
+        "group.id": f"deloton_stream" + str(uuid.uuid1()),
+        "security.protocol": "SASL_SSL",
+        "sasl.mechanisms": "PLAIN",
+        "sasl.username": os.getenv("SASL_USERNAME"),
+        "sasl.password": os.getenv("SASL_PASSWORD"),
+        "fetch.wait.max.ms": 6000,
+        "auto.offset.reset": "latest",
+        "enable.auto.commit": "false",
+        "max.poll.interval.ms": "86400000",
+        "topic.metadata.refresh.interval.ms": "-1",
+        "client.id": "id-002-0068fsc",
+    })
+    c.subscribe(["deloton"])
+    return c
+
+consumer = kafka_consumer()
 
 app = Dash(__name__, external_stylesheets=[
            dbc.themes.ZEPHYR], use_pages=True)
@@ -42,7 +64,12 @@ def read_from_s3() -> dict:
 
 
 @app.callback(
-    [
+    [   Output(component_id="name-id", component_property="children"),
+        Output(component_id="age-id", component_property="children"),
+        Output(component_id="gender-id", component_property="children"),
+        Output(component_id="weight-id", component_property="children"),
+        Output(component_id="height-id", component_property="children"),
+        Output(component_id="max-heart-rate-id", component_property="children"),
         Output(component_id="duration-id", component_property="children"),
         Output(component_id="bpm-id", component_property="children"),
         Output(component_id="rpm-id", component_property="children"),
@@ -56,14 +83,18 @@ def read_from_s3() -> dict:
 )
 def run_consumer(interval: int) -> tuple:
     """Reads data from the Kafka stream"""
-    reading = read_in_from_kafka()
+    reading, user_details = read_in_from_kafka(consumer)
+
+    # dealing with bike data
     if reading:
-        duration = str(reading["duration"])
+        duration = reading["duration"]
         bpm = reading["current_heart_rate"]
         rpm = reading["current_rpm"]
         resistance = reading["current_resistance"]
         power = math.floor(reading["current_power"])
         max_heart_rate = read_from_s3()["max_hrt"]
+
+        # update style if heart rate is too high
         if bpm >= max_heart_rate:
             style = {"text-align": "center", "font-weight": "bold",
                      "font-size": "20px", "color": "red"}
@@ -71,28 +102,17 @@ def run_consumer(interval: int) -> tuple:
             style = {"text-align": "center", "font-weight": "bold",
                      "font-size": "20px", "color": "green"}
 
-    return f"{duration} seconds", f"{bpm} BPM", f"{rpm} RPM", f"{resistance} resistance", f"{power} W", style
-
-
-@app.callback(
-    [
-        Output(component_id="name-id", component_property="children"),
-        Output(component_id="age-id", component_property="children"),
-        Output(component_id="gender-id", component_property="children"),
-        Output(component_id="weight-id", component_property="children"),
-        Output(component_id="height-id", component_property="children"),
-        Output(component_id="max-heart-rate-id", component_property="children")
-    ],
-    [Input("user-interval-component", "n_intervals")]
-)
-def update_user_details(interval: int) -> tuple:
-    """Reads user details from an S3 bucket and returns a string"""
-    user_details = read_from_s3()
-
-    return f"""{user_details["name"]}""", f"""{user_details["age"]} years old""", \
+    # if no user found, do not update user details
+    if user_details:
+        return f"""{user_details["name"]}""", f"""{user_details["age"]} years old""", \
         f"""{(user_details["gender"]).capitalize()}""", f"""{user_details["weight"]} kg""",\
-        f"""{user_details["height"]} cm""", f"""Max Threshold BPM {user_details["max_hrt"]}"""
+        f"""{user_details["height"]} cm""", f"""Max Threshold BPM {user_details["max_hrt"]}""",\
+        f""""{duration} seconds""", f"""{bpm} BPM""", f"""{rpm} RPM""", f"""{resistance} resistance""",\
+        f"""{power} W""", style
 
+    return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update,\
+             f"{duration} seconds", f"{bpm} BPM", f"{rpm} RPM", f"{resistance} resistance", f"{power} W", style
+   
 
 @app.callback(
     [Output(component_id="date", component_property="children")],
