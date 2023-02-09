@@ -38,18 +38,14 @@ def extract_user_details(message: str) -> dict:
 
     name = split_name(raw_data["name"])
     dob_date = unix_to_date(raw_data["date_of_birth"])
-    date_created = unix_to_date(raw_data["account_create_date"])
-    full_address = raw_data["address"].split(",")
-    postcode = full_address[-1]
-    address = ", ".join(full_address[:-1])
+    user_age = age_from_dob(dob_date)
+    max_heart_rate = get_max_heart_rate(user_age)
 
-    user_dict = {"user_id": raw_data["user_id"], "first": name[0],
-                 "second": name[1], "address": address, "postcode": postcode,
-                 "dob_date": dob_date, "height": raw_data["height_cm"],
-                 "weight": raw_data["weight_kg"], "gender": raw_data["gender"],
-                 "email": raw_data["email_address"], "date_created": date_created,
-                 "original_source": raw_data["original_source"],
-                 "bike_serial": raw_data["bike_serial"]}
+    user_dict = {"name": name[0] + " " + name[-1], "age": user_age,
+                "max_hrt": max_heart_rate,
+                "height": raw_data["height_cm"],
+                "weight": raw_data["weight_kg"], "gender": raw_data["gender"],
+                }
 
     return user_dict
 

@@ -12,18 +12,13 @@ pil_image = Image.open("pages/assets/Deloton-resized.png")
 layout = \
     html.Div([
         dcc.Interval(
-             id="user-interval-component",
-             interval=1000,
-             n_intervals=0
-             ),
-        dcc.Interval(
             id="riders-interval-component",
-            interval=10*60*1000,
+            interval=10 * 60 * 1000,
             n_intervals=0
         ),
         dcc.Interval(
             id="interval-component",
-            interval=2*1000,
+            interval=2 * 1000,
             n_intervals=0
         ),
 
