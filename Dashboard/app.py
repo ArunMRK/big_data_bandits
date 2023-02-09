@@ -15,8 +15,28 @@ app = Dash(__name__, external_stylesheets=[
 app.layout = html.Div(dash.page_container)
 
 conn = get_db_connection()
-
 s3_client = boto3.client("s3")
+
+def kafka_consumer() -> Consumer:
+    """Makes a connection to a Kafka consumer"""
+    c = Consumer({
+        "bootstrap.servers": os.getenv("BOOTSTRAP_SERVERS"),
+        "group.id": f"deloton_stream" + str(uuid.uuid1()),
+        "security.protocol": "SASL_SSL",
+        "sasl.mechanisms": "PLAIN",
+        "sasl.username": os.getenv("SASL_USERNAME"),
+        "sasl.password": os.getenv("SASL_PASSWORD"),
+        "fetch.wait.max.ms": 6000,
+        "auto.offset.reset": "latest",
+        "enable.auto.commit": "false",
+        "max.poll.interval.ms": "86400000",
+        "topic.metadata.refresh.interval.ms": "-1",
+        "client.id": "id-002-0068fsc",
+    })
+    c.subscribe(["deloton"])
+    return c
+
+consumer = kafka_consumer()
 
 
 def get_formatted_times() -> datetime.datetime:
@@ -33,7 +53,6 @@ def read_from_s3() -> dict:
     """
     S3_BUCKET_NAME = "big-data-bandits"
     KEY = "current-user/user-data.json"
-    s3_client = boto3.client("s3")
     response = s3_client.get_object(Bucket=S3_BUCKET_NAME, Key=KEY)
     data = response["Body"].read()
     user_details = json.loads(data)
@@ -42,7 +61,12 @@ def read_from_s3() -> dict:
 
 
 @app.callback(
-    [
+    [   Output(component_id="name-id", component_property="children"),
+        Output(component_id="age-id", component_property="children"),
+        Output(component_id="gender-id", component_property="children"),
+        Output(component_id="weight-id", component_property="children"),
+        Output(component_id="height-id", component_property="children"),
+        Output(component_id="max-heart-rate-id", component_property="children"),
         Output(component_id="duration-id", component_property="children"),
         Output(component_id="bpm-id", component_property="children"),
         Output(component_id="rpm-id", component_property="children"),
@@ -54,9 +78,10 @@ def read_from_s3() -> dict:
     ],
     [Input("interval-component", "n_intervals")]
 )
+
 def run_consumer(interval: int) -> tuple:
     """Reads data from the Kafka stream"""
-    reading = read_in_from_kafka()
+    reading, user_details = read_in_from_kafka(consumer)
     if reading:
         duration = str(reading["duration"])
         bpm = reading["current_heart_rate"]
@@ -70,28 +95,37 @@ def run_consumer(interval: int) -> tuple:
         else:
             style = {"text-align": "center", "font-weight": "bold",
                      "font-size": "20px", "color": "green"}
-
-    return f"{duration} seconds", f"{bpm} BPM", f"{rpm} RPM", f"{resistance} resistance", f"{power} W", style
-
-
-@app.callback(
-    [
-        Output(component_id="name-id", component_property="children"),
-        Output(component_id="age-id", component_property="children"),
-        Output(component_id="gender-id", component_property="children"),
-        Output(component_id="weight-id", component_property="children"),
-        Output(component_id="height-id", component_property="children"),
-        Output(component_id="max-heart-rate-id", component_property="children")
-    ],
-    [Input("user-interval-component", "n_intervals")]
-)
-def update_user_details(interval: int) -> tuple:
-    """Reads user details from an S3 bucket and returns a string"""
-    user_details = read_from_s3()
-
-    return f"""{user_details["name"]}""", f"""{user_details["age"]} years old""", \
+    if user_details:
+        return f"""{user_details["name"]}""", f"""{user_details["age"]} years old""", \
         f"""{(user_details["gender"]).capitalize()}""", f"""{user_details["weight"]} kg""",\
-        f"""{user_details["height"]} cm""", f"""Max Threshold BPM {user_details["max_hrt"]}"""
+        f"""{user_details["height"]} cm""", f"""Max Threshold BPM {user_details["max_hrt"]}""",\
+        f""""{duration} seconds""", f"""{bpm} BPM""", f"""{rpm} RPM""", f"""{resistance} resistance""",\
+        f"""{power} W""", style
+
+    return dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update, dash.no_update,\
+            f"{duration} seconds", f"{bpm} BPM", f"{rpm} RPM", f"{resistance} resistance", f"{power} W", style
+    
+    
+
+
+# @app.callback(
+#     [
+#         Output(component_id="name-id", component_property="children"),
+#         Output(component_id="age-id", component_property="children"),
+#         Output(component_id="gender-id", component_property="children"),
+#         Output(component_id="weight-id", component_property="children"),
+#         Output(component_id="height-id", component_property="children"),
+#         Output(component_id="max-heart-rate-id", component_property="children")
+#     ],
+#     [Input("user-interval-component", "n_intervals")]
+# )
+# def update_user_details(interval: int) -> tuple:
+#     """Reads user details from an S3 bucket and returns a string"""
+#     user_details = read_from_s3()
+
+#     return f"""{user_details["name"]}""", f"""{user_details["age"]} years old""", \
+#         f"""{(user_details["gender"]).capitalize()}""", f"""{user_details["weight"]} kg""",\
+#         f"""{user_details["height"]} cm""", f"""Max Threshold BPM {user_details["max_hrt"]}"""
 
 
 @app.callback(
