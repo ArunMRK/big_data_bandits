@@ -28,11 +28,11 @@ This will allow you to view the API on your local browser.
 
 ## Running on AWS
 
-Create an AWS EC2 instance with all the security groups you wish to open.Ensure your IAM user has the required permissions:
+- Create an AWS EC2 instance with all the security groups you wish to open. Ensure your IAM user has the required permissions:
 
-- S3fullaccess
-- EC2fullaccess
-- RDSfullaccess
+  - S3fullaccess
+  - EC2fullaccess
+  - RDSfullaccess
 - Secure copy all the files from your local machines into your EC2 instance (.pem key will be needed)
 
 - <code>scp -i path/to/key/key.pem path/to/directory/API/\* ec2-user@<YOUR_Public_IPv4_DNS_EC2>:.</code>
